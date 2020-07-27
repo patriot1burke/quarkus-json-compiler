@@ -6,5 +6,9 @@
   "name": "Bill",
   "age": 50,
   "money": 123.23,
-  "married": true
+  "married": true,
+  "dad": {
+    "name": "John",
+    "married": true
+  }
 }

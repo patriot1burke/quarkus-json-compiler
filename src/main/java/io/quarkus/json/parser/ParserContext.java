@@ -7,7 +7,17 @@ public class ParserContext {
     protected Stack<ParserState> state = new Stack<>();
     protected Stack<Object> target = new Stack<>();
     protected StringBuffer token;
-    protected ParserHandler handler;
+    protected char curr;
+    protected boolean consumed;
+
+    public char consume() {
+        consumed = true;
+        return curr;
+    }
+
+    public char peek() {
+        return curr;
+    }
 
     public StringBuffer token() {
         if (token == null) token = new StringBuffer();
@@ -20,28 +30,28 @@ public class ParserContext {
         return tmp.toString();
     }
 
-    public ParserHandler handler() {
-        return handler;
-    }
-
-    public void handler(ParserHandler handler) {
-        this.handler = handler;
-    }
-
     public void parse(char c) {
         charCount++;
+        consumed = false;
+        curr = c;
         if (state.empty() && !Character.isWhitespace(c)) {
             throw new RuntimeException("Illegal character at " + charCount);
         }
-        state.peek().parse(c, this);
+        while (!consumed) {
+            state.peek().parse(this);
+        }
     }
 
     public int charCount() {
         return charCount;
     }
 
-    public Stack<ParserState> state() {
-        return state;
+    public void pushState(ParserState state) {
+        this.state.push(state);
+    }
+
+    public void popState() {
+        this.state.pop();
     }
 
     public <T> T target() {
@@ -49,10 +59,11 @@ public class ParserContext {
     }
 
     public void pushTarget(Object obj) {
+
         target.push(obj);
     }
 
-    public <T> T popTarget(Object obj) {
+    public <T> T popTarget() {
         return (T)target.pop();
     }
 }

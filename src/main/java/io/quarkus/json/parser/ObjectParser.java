@@ -2,132 +2,125 @@ package io.quarkus.json.parser;
 
 public abstract class ObjectParser {
 
-    public void start(char c, ParserContext ctx) {
+    public void start(ParserContext ctx) {
+        char c = ctx.consume();
         if (Character.isWhitespace(c)) return;
         if (c != '{') throw new RuntimeException("Expected '{' at character " + ctx.charCount());
-
-        ctx.state().pop();
-        ctx.state().push(this::keyStart);
+        ctx.popState();
+        ctx.pushState(this::keyStart);
     }
 
-    public void keyStart(char c, ParserContext ctx) {
+    public void keyStart(ParserContext ctx) {
+        char c = ctx.consume();
         if (Character.isWhitespace(c)) return;
+        ctx.popState();
+
         if (c == '}') {
-            ctx.state().pop();
             return;
         }
         if (c != '"') throw new RuntimeException("Expected '\"' at character " + ctx.charCount());
-        ctx.state().pop();
-        ctx.state().push(this::key);
+        ctx.pushState(this::key);
     }
 
     abstract void handleKey(String key, ParserContext ctx);
 
-    public void key(char c, ParserContext ctx) {
+    public void key(ParserContext ctx) {
+        char c = ctx.consume();
         if (c != '"') {
             ctx.token().append(c);
             return;
         }
+        ctx.popState();
+        ctx.pushState(this::nextKey);
         String key = ctx.popToken();
-        ctx.state().pop();
         handleKey(key, ctx);
+        ctx.pushState(this::valueSeparator);
     }
 
-    public void valueSeparator(char c, ParserContext ctx) {
+    public void valueSeparator(ParserContext ctx) {
+        char c = ctx.consume();
         if (Character.isWhitespace(c)) return;
         if (c != ':') throw new RuntimeException("Expecting ':' at character " + ctx.charCount());
-        ctx.state().pop();
-        ctx.state().push(this::valueStart);
+        ctx.popState();
     }
 
-    public void valueStart(char c, ParserContext ctx) {
+    public void valueStart(ParserContext ctx) {
+        char c = ctx.consume();
         if (Character.isWhitespace(c)) return;
+        ctx.popState();
         if (c == '"') {
-            ctx.state().pop();
-            ctx.state().push(this::stringValue);
-            ctx.handler().handle(ctx);
+            ctx.pushState(this::stringValue);
         } else if (Character.isDigit(c)) {
-            ctx.state().pop();
-            ctx.state().push(this::numberValue);
+            ctx.pushState(this::numberValue);
             ctx.token().append(c);
-            ctx.handler().handle(ctx);
         } else if (c == 't' || c == 'f') {
-            ctx.state().pop();
-            ctx.state().push(this::booleanValue);
+            ctx.pushState(this::booleanValue);
             ctx.token().append(c);
-            ctx.handler().handle(ctx);
         } else {
             throw new RuntimeException("Illegal value syntax at character " + ctx.charCount());
         }
     }
 
-    public void stringValue(char c, ParserContext ctx) {
-        if (c == '"') {
-            ctx.state().pop();
-            ctx.handler().handle(ctx);
-        } else {
+    public void stringValue(ParserContext ctx) {
+        char c = ctx.consume();
+        if (c != '"') {
             ctx.token().append(c);
+        } else {
+            ctx.popState();
         }
     }
 
-    public void numberValue(char c, ParserContext ctx) {
+    public void numberValue(ParserContext ctx) {
+        char c = ctx.peek();
         if (c == '.') {
-            ctx.state().pop();
-            ctx.state().push(this::floatValue);
+            ctx.consume();
+            ctx.popState();
+            ctx.pushState(this::floatValue);
             ctx.token().append(c);
         } else if (Character.isDigit(c)) {
+            ctx.consume();
             ctx.token().append(c);
         } else if (!Character.isWhitespace(c) && c != ',' && c != '}') {
             throw new RuntimeException("Illegal character at " + ctx.charCount());
         } else {
-            ctx.state().pop();
-            ctx.handler().handle(ctx);
-            ctx.parse(c);
+            ctx.popState();
         }
     }
 
-    public void floatValue(char c, ParserContext ctx) {
+    public void floatValue(ParserContext ctx) {
+        char c = ctx.peek();
         if (Character.isDigit(c)) {
+            ctx.consume();
             ctx.token().append(c);
         } else if (!Character.isWhitespace(c) && c != ',' && c != '}') {
             throw new RuntimeException("Illegal character at " + ctx.charCount());
         } else {
-            ctx.state().pop();
-            ctx.handler().handle(ctx);
-            ctx.parse(c);
+            ctx.popState();
         }
     }
 
-    public void booleanValue(char c, ParserContext ctx) {
-        if (!Character.isWhitespace(c) && c != ',' && c != '}') {
+    public void booleanValue(ParserContext ctx) {
+        char c = ctx.peek();
+        if (Character.isAlphabetic(c)) {
+            ctx.consume();
             ctx.token().append(c);
+        } else if (!Character.isWhitespace(c) && c != ',' && c != '}') {
+            throw new RuntimeException("Illegal character at " + ctx.charCount());
         } else {
-            ctx.state().pop();
-            ctx.handler().handle(ctx);
-            ctx.parse(c);
+            ctx.popState();
         }
     }
 
-    public void nextKey(char c, ParserContext ctx) {
+    public void nextKey(ParserContext ctx) {
+        char c = ctx.consume();
         if (Character.isWhitespace(c)) return;
+        ctx.popState();
         if (c == ',') {
-            ctx.state().pop();
-            ctx.state().push(this::keyStart);
+            ctx.pushState(this::keyStart);
         } else if (c == '}') {
-            ctx.state().pop();
             return;
         } else {
             throw new RuntimeException("Illegal character at character " + ctx.charCount());
         }
-    }
-
-    public void _skipValue(ParserContext ctx) {
-        ctx.state().push(this::valueStart);
-        ctx.handler(this::_skipValueEnd);
-    }
-
-    public void _skipValueEnd(ParserContext ctx) {
-        ctx.popToken();
-        ctx.state().push(this::nextKey);
     }
 }

@@ -8,6 +8,15 @@ public class Person {
     private float money;
     private boolean married;
     private Map<String, Integer> intMap;
+    private Person dad;
+
+    public Person getDad() {
+        return dad;
+    }
+
+    public void setDad(Person dad) {
+        this.dad = dad;
+    }
 
     public float getMoney() {
         return money;
