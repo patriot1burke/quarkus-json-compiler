@@ -1,0 +1,10 @@
+{
+  "intMap": {
+    "one": 1,
+    "two": 2
+  },
+  "name": "Bill",
+  "age": 50,
+  "money": 123.23,
+  "married": true
+}
