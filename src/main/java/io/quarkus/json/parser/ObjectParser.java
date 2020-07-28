@@ -92,8 +92,6 @@ public abstract class ObjectParser {
             ctx.token().append(c);
         } else if (Character.isDigit(c)) {
             ctx.token().append(c);
-        } else if (!Character.isWhitespace(c) && c != ',' && c != '}') {
-            throw new RuntimeException("Illegal character at " + ctx.charCount());
         } else {
             ctx.push(c);
             ctx.popState();
@@ -104,8 +102,6 @@ public abstract class ObjectParser {
         char c = ctx.consume();
         if (Character.isDigit(c)) {
             ctx.token().append(c);
-        } else if (!Character.isWhitespace(c) && c != ',' && c != '}') {
-            throw new RuntimeException("Illegal character at " + ctx.charCount());
         } else {
             ctx.push(c);
             ctx.popState();
@@ -116,8 +112,6 @@ public abstract class ObjectParser {
         char c = ctx.consume();
         if (Character.isAlphabetic(c)) {
             ctx.token().append(c);
-        } else if (!Character.isWhitespace(c) && c != ',' && c != '}') {
-            throw new RuntimeException("Illegal character at " + ctx.charCount());
         } else {
             ctx.push(c);
             ctx.popState();

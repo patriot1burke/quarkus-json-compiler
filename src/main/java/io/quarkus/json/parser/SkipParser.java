@@ -120,8 +120,6 @@ public class SkipParser {
             appendToken(ctx, c);
         } else if (Character.isDigit(c)) {
             appendToken(ctx, c);
-        } else if (!Character.isWhitespace(c) && c != ',' && c != '}') {
-            throw new RuntimeException("Illegal character at " + ctx.charCount());
         } else {
             endNumberValue(ctx);
             ctx.push(c);
@@ -137,8 +135,6 @@ public class SkipParser {
         char c = ctx.consume();
         if (Character.isDigit(c)) {
             appendToken(ctx, c);
-        } else if (!Character.isWhitespace(c) && c != ',' && c != '}') {
-            throw new RuntimeException("Illegal character at " + ctx.charCount());
         } else {
             endFloatValue(ctx);
             ctx.push(c);
@@ -153,8 +149,6 @@ public class SkipParser {
         char c = ctx.consume();
         if (Character.isAlphabetic(c)) {
             appendToken(ctx, c);
-        } else if (!Character.isWhitespace(c) && c != ',' && c != '}') {
-            throw new RuntimeException("Illegal character at " + ctx.charCount());
         } else {
             endBooleanValue(ctx);
             ctx.push(c);

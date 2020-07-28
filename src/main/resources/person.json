@@ -7,6 +7,15 @@
   "age": 50,
   "money": 123.23,
   "married": true,
+  "junkInt": 666,
+  "junkFloat": 6.66,
+  "junkBool": true,
+  "junkList": ["1", "2"],
+  "junkMap": {
+    "foo": "bar",
+    "one": 1,
+    "list": [1, 2, 3, 4]
+  },
   "dad": {
     "name": "John",
     "married": true

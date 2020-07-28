@@ -28,6 +28,15 @@ public class ParserTest {
             "  \"age\": 50,\n" +
             "  \"money\": 123.23,\n" +
             "  \"married\": true,\n" +
+            "  \"junkInt\": 666,\n" +
+            "  \"junkFloat\": 6.66,\n" +
+            "  \"junkList\": [\"1\", \"2\"]," +
+            "  \"junkBool\": true,\n" +
+            "  \"junkMap\": {\n" +
+            "    \"foo\": \"bar\",\n" +
+            "    \"one\": 1,\n" +
+            "    \"list\": [1, 2, 3, 4]\n" +
+            "  },\n" +
             "  \"dad\": {\n" +
             "    \"name\": \"John\",\n" +
             "    \"married\": true\n" +
@@ -64,10 +73,6 @@ public class ParserTest {
             "  \"age\": 50,\n" +
             "  \"money\": 123.23,\n" +
             "  \"married\": true,\n" +
-            "  \"dad\": {\n" +
-            "    \"name\": \"John\",\n" +
-            "    \"married\": true\n" +
-            "  },\n" +
             "  \"list\": [\n" +
             "    \"one\",\n" +
             "    2,\n" +
@@ -77,7 +82,12 @@ public class ParserTest {
             "      \"name\": \"John\",\n" +
             "      \"married\": true\n" +
             "    }\n" +
-            "  ]\n" +
+            "  ],\n" +
+            "  \"list2\": [0, 1, 2, 3   ]   ,\n" +
+            "  \"dad\": {\n" +
+            "    \"name\": \"John\",\n" +
+            "    \"married\": true\n" +
+            "  }\n" +
             "}";
 
 
@@ -108,6 +118,11 @@ public class ParserTest {
         Assertions.assertEquals(true, list.get(3));
         Assertions.assertEquals("John", ((Map)list.get(4)).get("name"));
         Assertions.assertEquals(true, ((Map)list.get(4)).get("married"));
+        List list2 = (List)person.get("list2");
+        Assertions.assertEquals(0, list2.get(0));
+        Assertions.assertEquals(1, list2.get(1));
+        Assertions.assertEquals(2, list2.get(2));
+        Assertions.assertEquals(3, list2.get(3));
 
     }
 

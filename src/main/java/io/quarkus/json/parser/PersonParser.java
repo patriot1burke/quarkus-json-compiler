@@ -31,7 +31,7 @@ public class PersonParser extends ObjectParser implements JsonParser {
         } else if (key.equals("dad")) {
             ctx.pushState(this::dadStart);
         } else {
-            throw new RuntimeException("Unknown key");
+            ctx.pushState(SkipParser.PARSER::value);
         }
     }
 
