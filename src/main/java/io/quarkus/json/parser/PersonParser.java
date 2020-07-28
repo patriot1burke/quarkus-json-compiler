@@ -1,20 +1,10 @@
 package io.quarkus.json.parser;
 
-import java.util.HashMap;
+import java.util.Map;
 
-public class PersonParser extends SkipParser {
+public class PersonParser extends ObjectParser {
 
     public static final PersonParser PARSER = new PersonParser();
-
-    public void start(ParserContext ctx) {
-        startObject(ctx);
-    }
-
-    @Override
-    public void appendToken(ParserContext ctx, char c) {
-        ctx.token().append(c);
-    }
-
 
     @Override
     public void beginObject(ParserContext ctx) {
@@ -37,21 +27,17 @@ public class PersonParser extends SkipParser {
             ctx.pushState(this::marriedEnd);
             ctx.pushState(this::value);
         } else if (key.equals("intMap")) {
-            ctx.pushState(this::intMapStart);
+            ctx.pushState(this::intMapEnd);
+            ctx.pushState(new MapParser(ContextValue.STRING_VALUE, ContextValue.INT_VALUE)::start);
         }
         else if (key.equals("dad")) {
-            ctx.pushState(this::dadStart);
+            ctx.pushState(this::dadEnd);
+            ctx.pushState(PersonParser.PARSER::start);
         }
         else {
             ctx.pushState(SkipParser.PARSER::value);
         }
         return true;
-    }
-
-    public void dadStart(ParserContext ctx) {
-        ctx.popState();
-        ctx.pushState(this::dadEnd);
-        ctx.pushState(PersonParser.PARSER::start);
     }
 
     public void dadEnd(ParserContext ctx) {
@@ -61,17 +47,11 @@ public class PersonParser extends SkipParser {
         person.setDad(dad);
     }
 
-    public void intMapStart(ParserContext ctx) {
+    public void intMapEnd(ParserContext ctx) {
         ctx.popState();
+        Map<String, Integer> intMap = ctx.popTarget();
         Person person = ctx.target();
-        person.setIntMap(new HashMap<>());
-        MapParser mapParser = new MapParser() {
-            @Override
-            void setValue(String property, String value, ParserContext ctx) {
-                person.getIntMap().put(property, Integer.valueOf(value));
-            }
-        };
-        ctx.pushState(mapParser::start);
+        person.setIntMap(intMap);
     }
 
     public void nameEnd(ParserContext ctx) {

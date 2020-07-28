@@ -28,6 +28,20 @@ public class SkipParser implements JsonParser {
 
     }
 
+    public void startList(ParserContext ctx) {
+        char c = ctx.consume();
+        if (Character.isWhitespace(c)) return;
+        ctx.popState();
+        if (c == '[') {
+            beginObject(ctx);
+            ctx.pushState(this::nextValue);
+            listValue(ctx);
+        } else {
+            throw new RuntimeException("Illegal value syntax at character " + ctx.charCount());
+        }
+
+    }
+
     public void value(ParserContext ctx) {
         char c = ctx.consume();
         if (Character.isWhitespace(c)) return;
@@ -62,7 +76,7 @@ public class SkipParser implements JsonParser {
         ctx.pushState(this::value);
     }
 
-     public void addListValue(ParserContext ctx) {
+    public void addListValue(ParserContext ctx) {
         ctx.popState();
     }
 
