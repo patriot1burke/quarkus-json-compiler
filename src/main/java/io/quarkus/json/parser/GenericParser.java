@@ -22,7 +22,7 @@ public class GenericParser extends SkipParser implements JsonParser {
     }
 
     @Override
-    public void startList(ParserContext ctx) {
+    public void beginList(ParserContext ctx) {
         ctx.pushTarget(new LinkedList());
     }
 
@@ -34,7 +34,7 @@ public class GenericParser extends SkipParser implements JsonParser {
     }
 
     @Override
-    public void handleKey(ParserContext ctx) {
+    public boolean handleKey(ParserContext ctx) {
         String key = ctx.popToken();
         ctx.pushState((ctx1) -> {
             ctx1.popState();
@@ -42,10 +42,12 @@ public class GenericParser extends SkipParser implements JsonParser {
             Map map = ctx1.target();
             map.put(key, val);
         });
+        ctx.pushState(this::value);
+        return true;
     }
 
     @Override
-    public void startObject(ParserContext ctx) {
+    public void beginObject(ParserContext ctx) {
         ctx.pushTarget(new HashMap());
     }
 

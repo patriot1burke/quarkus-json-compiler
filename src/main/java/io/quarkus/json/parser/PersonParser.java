@@ -2,45 +2,56 @@ package io.quarkus.json.parser;
 
 import java.util.HashMap;
 
-public class PersonParser extends ObjectParser implements JsonParser {
+public class PersonParser extends SkipParser {
 
-    @Override
-    public ParserContext parser() {
-        ParserContext ctx = new ParserContext();
-        ctx.pushTarget(new Person());
-        ctx.pushState(this::start);
-        return ctx;
+    public static final PersonParser PARSER = new PersonParser();
+
+    public void start(ParserContext ctx) {
+        startObject(ctx);
     }
 
     @Override
-    void handleKey(String key, ParserContext ctx) {
+    public void appendToken(ParserContext ctx, char c) {
+        ctx.token().append(c);
+    }
+
+
+    @Override
+    public void beginObject(ParserContext ctx) {
+        ctx.pushTarget(new Person());
+    }
+
+    @Override
+    public boolean handleKey(ParserContext ctx) {
+        String key = ctx.popToken();
         if (key.equals("name")) {
             ctx.pushState(this::nameEnd);
-            ctx.pushState(this::valueStart);
+            ctx.pushState(this::value);
         } else if (key.equals("age")) {
             ctx.pushState(this::ageEnd);
-            ctx.pushState(this::valueStart);
+            ctx.pushState(this::value);
         } else if (key.equals("money")) {
             ctx.pushState(this::moneyEnd);
-            ctx.pushState(this::valueStart);
+            ctx.pushState(this::value);
         } else if (key.equals("married")) {
             ctx.pushState(this::marriedEnd);
-            ctx.pushState(this::valueStart);
+            ctx.pushState(this::value);
         } else if (key.equals("intMap")) {
             ctx.pushState(this::intMapStart);
-        } else if (key.equals("dad")) {
+        }
+        else if (key.equals("dad")) {
             ctx.pushState(this::dadStart);
-        } else {
+        }
+        else {
             ctx.pushState(SkipParser.PARSER::value);
         }
+        return true;
     }
 
     public void dadStart(ParserContext ctx) {
         ctx.popState();
-        PersonParser dadParser = new PersonParser();
-        ctx.pushTarget(new Person());
         ctx.pushState(this::dadEnd);
-        ctx.pushState(dadParser::start);
+        ctx.pushState(PersonParser.PARSER::start);
     }
 
     public void dadEnd(ParserContext ctx) {

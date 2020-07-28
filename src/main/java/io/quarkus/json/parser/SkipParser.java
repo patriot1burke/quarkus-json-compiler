@@ -1,7 +1,32 @@
 package io.quarkus.json.parser;
 
-public class SkipParser {
+public class SkipParser implements JsonParser {
     public static final SkipParser PARSER = new SkipParser();
+
+    @Override
+    public ParserContext parser() {
+        ParserContext ctx = new ParserContext();
+        ctx.pushState(this::start);
+        return ctx;
+    }
+
+    public void start(ParserContext ctx) {
+        value(ctx);
+    }
+
+    public void startObject(ParserContext ctx) {
+        char c = ctx.consume();
+        if (Character.isWhitespace(c)) return;
+        ctx.popState();
+        if (c == '{') {
+            beginObject(ctx);
+            ctx.pushState(this::nextKey);
+            ctx.pushState(this::keyStart);
+        } else {
+            throw new RuntimeException("Illegal value syntax at character " + ctx.charCount());
+        }
+
+    }
 
     public void value(ParserContext ctx) {
         char c = ctx.consume();
@@ -16,11 +41,11 @@ public class SkipParser {
             ctx.pushState(this::booleanValue);
             appendToken(ctx, c);
         } else if (c == '{') {
-            startObject(ctx);
+            beginObject(ctx);
             ctx.pushState(this::nextKey);
             ctx.pushState(this::keyStart);
         } else if (c == '[') {
-            startList(ctx);
+            beginList(ctx);
             ctx.pushState(this::nextValue);
             listValue(ctx);
         } else {
@@ -28,7 +53,7 @@ public class SkipParser {
         }
     }
 
-    public void startList(ParserContext ctx) {
+    public void beginList(ParserContext ctx) {
 
     }
 
@@ -54,7 +79,7 @@ public class SkipParser {
         }
     }
 
-    public void startObject(ParserContext ctx) {
+    public void beginObject(ParserContext ctx) {
     }
 
     public void keyStart(ParserContext ctx) {
@@ -77,12 +102,14 @@ public class SkipParser {
             return;
         }
         ctx.popState();
-        handleKey(ctx);
+        if (!handleKey(ctx)) {
+            ctx.pushState(this::value);
+        }
         ctx.pushState(this::valueSeparator);
     }
 
-    public void handleKey(ParserContext ctx) {
-
+    public boolean handleKey(ParserContext ctx) {
+        return false;
     }
 
     public void valueSeparator(ParserContext ctx) {
@@ -90,7 +117,6 @@ public class SkipParser {
         if (Character.isWhitespace(c)) return;
         if (c != ':') throw new RuntimeException("Expecting ':' at character " + ctx.charCount());
         ctx.popState();
-        ctx.pushState(this::value);
     }
 
     public void appendToken(ParserContext ctx, char c) {

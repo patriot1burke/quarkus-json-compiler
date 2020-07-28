@@ -45,8 +45,7 @@ public class ParserTest {
 
     @Test
     public void testParser() {
-        PersonParser p = new PersonParser();
-        ParserContext ctx = p.parser();
+        ParserContext ctx = PersonParser.PARSER.parser();
 
         for (char c : json.toCharArray()) {
             System.out.write(c);
