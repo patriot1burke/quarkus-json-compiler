@@ -1,5 +1,6 @@
 package io.quarkus.json.parser;
 
+import java.util.List;
 import java.util.Map;
 
 public class Person {
@@ -9,6 +10,33 @@ public class Person {
     private boolean married;
     private Map<String, Integer> intMap;
     private Person dad;
+    private Map genericMap;
+    private Object genericBag;
+    private List genericList;
+
+    public Map getGenericMap() {
+        return genericMap;
+    }
+
+    public void setGenericMap(Map genericMap) {
+        this.genericMap = genericMap;
+    }
+
+    public Object getGenericBag() {
+        return genericBag;
+    }
+
+    public void setGenericBag(Object genericBag) {
+        this.genericBag = genericBag;
+    }
+
+    public List getGenericList() {
+        return genericList;
+    }
+
+    public void setGenericList(List genericList) {
+        this.genericList = genericList;
+    }
 
     public Person getDad() {
         return dad;

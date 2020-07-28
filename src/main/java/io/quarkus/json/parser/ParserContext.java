@@ -35,8 +35,12 @@ public class ParserContext {
         charCount++;
         consumed = false;
         curr = c;
-        if (state.empty() && !Character.isWhitespace(c)) {
-            throw new RuntimeException("Illegal character at " + charCount);
+        if (state.empty()) {
+            if (Character.isWhitespace(c)) {
+                return;
+            } else {
+                throw new RuntimeException("Illegal character at " + charCount);
+            }
         }
         while (!consumed) {
             state.peek().parse(this);

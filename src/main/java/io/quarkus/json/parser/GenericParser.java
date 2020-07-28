@@ -12,7 +12,7 @@ public class GenericParser extends SkipParser implements JsonParser {
     @Override
     public ParserContext parser() {
         ParserContext ctx = new ParserContext();
-        ctx.pushState(this::start);
+        ctx.pushState(this::value);
         return ctx;
     }
 

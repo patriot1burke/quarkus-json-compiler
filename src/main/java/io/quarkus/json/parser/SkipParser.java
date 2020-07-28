@@ -3,11 +3,19 @@ package io.quarkus.json.parser;
 public class SkipParser {
     public static final SkipParser PARSER = new SkipParser();
 
-    public void start(ParserContext ctx) {
+    public void value(ParserContext ctx) {
         char c = ctx.consume();
         if (Character.isWhitespace(c)) return;
         ctx.popState();
-        if (c == '{') {
+        if (c == '"') {
+            ctx.pushState(this::stringValue);
+        } else if (Character.isDigit(c)) {
+            ctx.pushState(this::numberValue);
+            appendToken(ctx, c);
+        } else if (c == 't' || c == 'f') {
+            ctx.pushState(this::booleanValue);
+            appendToken(ctx, c);
+        } else if (c == '{') {
             startObject(ctx);
             ctx.pushState(this::nextKey);
             ctx.pushState(this::keyStart);
@@ -16,7 +24,7 @@ public class SkipParser {
             ctx.pushState(this::nextValue);
             listValue(ctx);
         } else {
-            throw new RuntimeException("Illegal character at character " + ctx.charCount);
+            throw new RuntimeException("Illegal value syntax at character " + ctx.charCount());
         }
     }
 
@@ -26,7 +34,7 @@ public class SkipParser {
 
     public void listValue(ParserContext ctx) {
         ctx.pushState(this::addListValue);
-        ctx.pushState(this::valueStart);
+        ctx.pushState(this::value);
     }
 
      public void addListValue(ParserContext ctx) {
@@ -82,31 +90,11 @@ public class SkipParser {
         if (Character.isWhitespace(c)) return;
         if (c != ':') throw new RuntimeException("Expecting ':' at character " + ctx.charCount());
         ctx.popState();
-        ctx.pushState(this::valueStart);
+        ctx.pushState(this::value);
     }
 
     public void appendToken(ParserContext ctx, char c) {
 
-    }
-
-    public void valueStart(ParserContext ctx) {
-        char c = ctx.consume();
-        if (Character.isWhitespace(c)) return;
-        ctx.popState();
-        if (c == '"') {
-            ctx.pushState(this::stringValue);
-        } else if (Character.isDigit(c)) {
-            ctx.pushState(this::numberValue);
-            appendToken(ctx, c);
-        } else if (c == 't' || c == 'f') {
-            ctx.pushState(this::booleanValue);
-            appendToken(ctx, c);
-        } else if (c == '{' || c == '[') {
-            ctx.push(c);
-            ctx.pushState(this::start);
-        } else {
-            throw new RuntimeException("Illegal value syntax at character " + ctx.charCount());
-        }
     }
 
     public void stringValue(ParserContext ctx) {
