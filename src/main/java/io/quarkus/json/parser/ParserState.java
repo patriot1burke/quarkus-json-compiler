@@ -1,5 +1,5 @@
 package io.quarkus.json.parser;
 
-interface ParserState {
+public interface ParserState {
     void parse(ParserContext ctx);
 }
