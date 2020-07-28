@@ -1,6 +1,15 @@
-package io.quarkus.json.parser;
+package io.quarkus.json.parser.test;
+
+import io.quarkus.json.parser.CollectionParser;
+import io.quarkus.json.parser.ContextValue;
+import io.quarkus.json.parser.MapParser;
+import io.quarkus.json.parser.ObjectParser;
+import io.quarkus.json.parser.ParserContext;
+import io.quarkus.json.parser.SkipParser;
 
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 public class PersonParser extends ObjectParser {
@@ -30,17 +39,57 @@ public class PersonParser extends ObjectParser {
         } else if (key.equals("intMap")) {
             ctx.pushTarget(new HashMap());
             ctx.pushState(this::intMapEnd);
-            ctx.pushState(new MapParser(ContextValue.STRING_VALUE, ContextValue.INT_VALUE)::start);
+            ctx.pushState(new MapParser(ContextValue.STRING_VALUE, ContextValue.INT_VALUE,
+                    ObjectParser.PARSER::startIntegerValue)::start);
         }
         else if (key.equals("dad")) {
             ctx.pushState(this::dadEnd);
             ctx.pushState(PersonParser.PARSER::start);
+        } else if (key.equals("kids")) {
+            ctx.pushTarget(new HashMap());
+            ctx.pushState(this::kidsEnd);
+            ctx.pushState(new MapParser(ContextValue.STRING_VALUE,
+                    ContextValue.OBJECT_VALUE,
+                    PersonParser.PARSER::start)::start);
+
+        } else if (key.equals("siblings")) {
+            ctx.pushTarget(new LinkedList<>());
+            ctx.pushState(this::siblingsEnd);
+            ctx.pushState(new CollectionParser(ContextValue.OBJECT_VALUE,
+                    PersonParser.PARSER::start)::start);
+        } else if (key.equals("pets")) {
+            ctx.pushTarget(new LinkedList());
+            ctx.pushState(this::petsEnd);
+            ctx.pushState(new CollectionParser(ContextValue.STRING_VALUE,
+                    ObjectParser.PARSER::startStringValue)::start);
         }
         else {
             ctx.pushState(SkipParser.PARSER::value);
         }
         return true;
     }
+
+    public void siblingsEnd(ParserContext ctx) {
+        ctx.popState();
+        List<Person> siblings = ctx.popTarget();
+        Person person = ctx.target();
+        person.setSiblings(siblings);
+    }
+
+    public void petsEnd(ParserContext ctx) {
+        ctx.popState();
+        List<String> pets = ctx.popTarget();
+        Person person = ctx.target();
+        person.setPets(pets);
+    }
+
+    public void kidsEnd(ParserContext ctx) {
+        ctx.popState();
+        Map<String, Person> kids = ctx.popTarget();
+        Person person = ctx.target();
+        person.setKids(kids);
+    }
+
 
     public void dadEnd(ParserContext ctx) {
         ctx.popState();

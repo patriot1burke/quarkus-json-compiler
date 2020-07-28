@@ -53,18 +53,6 @@ public class SkipParser implements JsonParser {
         }
     }
 
-    public void startNumberValue(ParserContext ctx) {
-        char c = ctx.consume();
-        if (Character.isWhitespace(c)) return;
-        ctx.popState();
-        if (Character.isDigit(c)) {
-            ctx.pushState(this::numberValue);
-            appendToken(ctx, c);
-        } else {
-            throw new RuntimeException("Illegal value syntax at character " + ctx.charCount());
-        }
-    }
-
     public void startBooleanValue(ParserContext ctx) {
         char c = ctx.consume();
         if (Character.isWhitespace(c)) return;
@@ -186,6 +174,18 @@ public class SkipParser implements JsonParser {
     }
 
 
+    public void startNumberValue(ParserContext ctx) {
+        char c = ctx.consume();
+        if (Character.isWhitespace(c)) return;
+        ctx.popState();
+        if (Character.isDigit(c)) {
+            ctx.pushState(this::numberValue);
+            appendToken(ctx, c);
+        } else {
+            throw new RuntimeException("Illegal value syntax at character " + ctx.charCount());
+        }
+    }
+
     public void numberValue(ParserContext ctx) {
         char c = ctx.consume();
         if (c == '.') {
@@ -193,6 +193,29 @@ public class SkipParser implements JsonParser {
             ctx.pushState(this::floatValue);
             appendToken(ctx, c);
         } else if (Character.isDigit(c)) {
+            appendToken(ctx, c);
+        } else {
+            endNumberValue(ctx);
+            ctx.push(c);
+            ctx.popState();
+        }
+    }
+
+    public void startIntegerValue(ParserContext ctx) {
+        char c = ctx.consume();
+        if (Character.isWhitespace(c)) return;
+        ctx.popState();
+        if (Character.isDigit(c)) {
+            ctx.pushState(this::integerValue);
+            appendToken(ctx, c);
+        } else {
+            throw new RuntimeException("Illegal value syntax at character " + ctx.charCount());
+        }
+    }
+
+    public void integerValue(ParserContext ctx) {
+        char c = ctx.consume();
+        if (Character.isDigit(c)) {
             appendToken(ctx, c);
         } else {
             endNumberValue(ctx);

@@ -11,6 +11,7 @@ public interface ContextValue {
     ContextValue FLOAT_VALUE = (ctx) -> Float.valueOf(ctx.popToken());
     ContextValue DOUBLE_VALUE = (ctx) -> Double.valueOf(ctx.popToken());
     ContextValue STRING_VALUE = (ctx) -> ctx.popToken();
+    ContextValue OBJECT_VALUE = (ctx) -> ctx.popTarget();
     ContextValue CHAR_VALUE = (ctx) -> {
         String val = ctx.popToken();
         if (val.length() != 1) throw new RuntimeException("Expecting single character for value at character " + ctx.charCount());

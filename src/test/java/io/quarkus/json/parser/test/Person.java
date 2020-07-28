@@ -1,4 +1,4 @@
-package io.quarkus.json.parser;
+package io.quarkus.json.parser.test;
 
 import java.util.List;
 import java.util.Map;
@@ -13,6 +13,33 @@ public class Person {
     private Map genericMap;
     private Object genericBag;
     private List genericList;
+    private Map<String, Person> kids;
+    private List<Person> siblings;
+    private List<String> pets;
+
+    public Map<String, Person> getKids() {
+        return kids;
+    }
+
+    public void setKids(Map<String, Person> kids) {
+        this.kids = kids;
+    }
+
+    public List<Person> getSiblings() {
+        return siblings;
+    }
+
+    public void setSiblings(List<Person> siblings) {
+        this.siblings = siblings;
+    }
+
+    public List<String> getPets() {
+        return pets;
+    }
+
+    public void setPets(List<String> pets) {
+        this.pets = pets;
+    }
 
     public Map getGenericMap() {
         return genericMap;
