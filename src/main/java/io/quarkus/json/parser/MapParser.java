@@ -15,7 +15,6 @@ abstract public class MapParser extends ObjectParser {
             return;
         }
         ctx.popState();
-        ctx.pushState(this::nextKey);
         String property = ctx.popToken();
         ctx.pushState((ctx1) -> {
             ctx1.popState();

@@ -15,8 +15,9 @@ public class ParserContext {
         return curr;
     }
 
-    public char peek() {
-        return curr;
+    public void push(char c) {
+        consumed = false;
+        curr = c;
     }
 
     public StringBuffer token() {

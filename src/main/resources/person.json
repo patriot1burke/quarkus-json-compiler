@@ -12,3 +12,14 @@
     "married": true
   }
 }
+
+[
+  "one",
+  2,
+  3.0,
+  true,
+  {
+    "name": "John",
+    "married": true
+  }
+]
