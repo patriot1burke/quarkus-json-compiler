@@ -1,5 +1,6 @@
 package io.quarkus.json.parser;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class PersonParser extends ObjectParser {
@@ -16,17 +17,18 @@ public class PersonParser extends ObjectParser {
         String key = ctx.popToken();
         if (key.equals("name")) {
             ctx.pushState(this::nameEnd);
-            ctx.pushState(this::value);
+            ctx.pushState(this::startStringValue);
         } else if (key.equals("age")) {
             ctx.pushState(this::ageEnd);
-            ctx.pushState(this::value);
+            ctx.pushState(this::startNumberValue);
         } else if (key.equals("money")) {
             ctx.pushState(this::moneyEnd);
-            ctx.pushState(this::value);
+            ctx.pushState(this::startNumberValue);
         } else if (key.equals("married")) {
             ctx.pushState(this::marriedEnd);
-            ctx.pushState(this::value);
+            ctx.pushState(this::startBooleanValue);
         } else if (key.equals("intMap")) {
+            ctx.pushTarget(new HashMap());
             ctx.pushState(this::intMapEnd);
             ctx.pushState(new MapParser(ContextValue.STRING_VALUE, ContextValue.INT_VALUE)::start);
         }

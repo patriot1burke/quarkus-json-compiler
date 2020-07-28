@@ -42,6 +42,40 @@ public class SkipParser implements JsonParser {
 
     }
 
+    public void startStringValue(ParserContext ctx) {
+        char c = ctx.consume();
+        if (Character.isWhitespace(c)) return;
+        ctx.popState();
+        if (c == '"') {
+            ctx.pushState(this::stringValue);
+        } else {
+            throw new RuntimeException("Illegal value syntax at character " + ctx.charCount());
+        }
+    }
+
+    public void startNumberValue(ParserContext ctx) {
+        char c = ctx.consume();
+        if (Character.isWhitespace(c)) return;
+        ctx.popState();
+        if (Character.isDigit(c)) {
+            ctx.pushState(this::numberValue);
+            appendToken(ctx, c);
+        } else {
+            throw new RuntimeException("Illegal value syntax at character " + ctx.charCount());
+        }
+    }
+
+    public void startBooleanValue(ParserContext ctx) {
+        char c = ctx.consume();
+        if (Character.isWhitespace(c)) return;
+        ctx.popState();
+        if (c == 't' || c == 'f') {
+            ctx.pushState(this::booleanValue);
+            appendToken(ctx, c);
+        } else {
+            throw new RuntimeException("Illegal value syntax at character " + ctx.charCount());
+        }
+    }
     public void value(ParserContext ctx) {
         char c = ctx.consume();
         if (Character.isWhitespace(c)) return;

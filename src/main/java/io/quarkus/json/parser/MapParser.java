@@ -20,11 +20,6 @@ public class MapParser extends ObjectParser {
     }
 
     @Override
-    public void beginObject(ParserContext ctx) {
-        ctx.pushTarget(new HashMap());
-    }
-
-    @Override
     public boolean handleKey(ParserContext ctx) {
         Object key = keyFunction.value(ctx);
         ctx.pushState((ctx1) -> {
