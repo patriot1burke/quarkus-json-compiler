@@ -6,9 +6,86 @@ public class SkipParser implements JsonParser {
     @Override
     public ParserContext parser() {
         ParserContext ctx = new ParserContext();
-        ctx.pushState(this::start);
+        ctx.pushState(getStart());
         return ctx;
     }
+
+
+
+    // we do these get methods to avoid object creations
+    // as method references create a new object every time
+    private ParserState start  = this::start;
+    public ParserState getStart() {
+        return start;
+    }
+    private ParserState nextKey  = this::nextKey;
+    public ParserState getNextKey() {
+        return nextKey;
+    }
+    private ParserState keyStart  = this::keyStart;
+    public ParserState getKeyStart() {
+        return keyStart;
+    }
+    private ParserState nextValue  = this::nextValue;
+    public ParserState getNextValue() {
+        return nextValue;
+    }
+    private ParserState stringValue  = this::stringValue;
+    public ParserState getStringValue() {
+        return stringValue;
+    }
+    private ParserState booleanValue  = this::booleanValue;
+    public ParserState getBooleanValue() {
+        return booleanValue;
+    }
+    private ParserState numberValue  = this::numberValue;
+    public ParserState getNumberValue() {
+        return numberValue;
+    }
+    private ParserState addListValue  = this::addListValue;
+    public ParserState getAddListValue() {
+        return addListValue;
+    }
+    private ParserState value  = this::value;
+    public ParserState getValue() {
+        return value;
+    }
+    private ParserState key  = this::key;
+    public ParserState getKey() {
+        return key;
+    }
+    private ParserState valueSeparator  = this::valueSeparator;
+    public ParserState getValueSeparator() {
+        return valueSeparator;
+    }
+    private ParserState floatValue  = this::floatValue;
+    public ParserState getFloatValue() {
+        return floatValue;
+    }
+    private ParserState integerValue  = this::integerValue;
+    public ParserState getIntegerValue() {
+        return integerValue;
+    }
+    private ParserState startStringValue  = this::startStringValue;
+    public ParserState getStartStringValue() {
+        return startStringValue;
+    }
+    private ParserState startNumberValue  = this::startNumberValue;
+    public ParserState getStartNumberValue() {
+        return startNumberValue;
+    }
+    private ParserState startBooleanValue  = this::startBooleanValue;
+    public ParserState getStartBooleanValue() {
+        return startBooleanValue;
+    }
+    private ParserState startIntegerValue  = this::startIntegerValue;
+    public ParserState getStartIntegerValue() {
+        return startIntegerValue;
+    }
+
+
+
+
 
     public void start(ParserContext ctx) {
         value(ctx);
@@ -20,13 +97,14 @@ public class SkipParser implements JsonParser {
         ctx.popState();
         if (c == '{') {
             beginObject(ctx);
-            ctx.pushState(this::nextKey);
-            ctx.pushState(this::keyStart);
+            ctx.pushState(getNextKey());
+            ctx.pushState(getKeyStart());
         } else {
             throw new RuntimeException("Illegal value syntax at character " + ctx.charCount());
         }
 
     }
+
 
     public void startList(ParserContext ctx) {
         char c = ctx.consume();
@@ -34,7 +112,7 @@ public class SkipParser implements JsonParser {
         ctx.popState();
         if (c == '[') {
             beginObject(ctx);
-            ctx.pushState(this::nextValue);
+            ctx.pushState(getNextValue());
             listValue(ctx);
         } else {
             throw new RuntimeException("Illegal value syntax at character " + ctx.charCount());
@@ -42,12 +120,13 @@ public class SkipParser implements JsonParser {
 
     }
 
+
     public void startStringValue(ParserContext ctx) {
         char c = ctx.consume();
         if (Character.isWhitespace(c)) return;
         ctx.popState();
         if (c == '"') {
-            ctx.pushState(this::stringValue);
+            ctx.pushState(getStringValue());
         } else {
             throw new RuntimeException("Illegal value syntax at character " + ctx.charCount());
         }
@@ -58,31 +137,32 @@ public class SkipParser implements JsonParser {
         if (Character.isWhitespace(c)) return;
         ctx.popState();
         if (c == 't' || c == 'f') {
-            ctx.pushState(this::booleanValue);
+            ctx.pushState(getBooleanValue());
             appendToken(ctx, c);
         } else {
             throw new RuntimeException("Illegal value syntax at character " + ctx.charCount());
         }
     }
+
     public void value(ParserContext ctx) {
         char c = ctx.consume();
         if (Character.isWhitespace(c)) return;
         ctx.popState();
         if (c == '"') {
-            ctx.pushState(this::stringValue);
+            ctx.pushState(getStringValue());
         } else if (Character.isDigit(c)) {
-            ctx.pushState(this::numberValue);
+            ctx.pushState(getNumberValue());
             appendToken(ctx, c);
         } else if (c == 't' || c == 'f') {
-            ctx.pushState(this::booleanValue);
+            ctx.pushState(getBooleanValue());
             appendToken(ctx, c);
         } else if (c == '{') {
             beginObject(ctx);
-            ctx.pushState(this::nextKey);
-            ctx.pushState(this::keyStart);
+            ctx.pushState(getNextKey());
+            ctx.pushState(getKeyStart());
         } else if (c == '[') {
             beginList(ctx);
-            ctx.pushState(this::nextValue);
+            ctx.pushState(getNextValue());
             listValue(ctx);
         } else {
             throw new RuntimeException("Illegal value syntax at character " + ctx.charCount());
@@ -94,8 +174,8 @@ public class SkipParser implements JsonParser {
     }
 
     public void listValue(ParserContext ctx) {
-        ctx.pushState(this::addListValue);
-        ctx.pushState(this::value);
+        ctx.pushState(getAddListValue());
+        ctx.pushState(getValue());
     }
 
     public void addListValue(ParserContext ctx) {
@@ -128,7 +208,7 @@ public class SkipParser implements JsonParser {
             return;
         }
         if (c != '"') throw new RuntimeException("Expected '\"' at character " + ctx.charCount());
-        ctx.pushState(this::key);
+        ctx.pushState(getKey());
     }
 
     public void key(ParserContext ctx) {
@@ -139,9 +219,9 @@ public class SkipParser implements JsonParser {
         }
         ctx.popState();
         if (!handleKey(ctx)) {
-            ctx.pushState(this::value);
+            ctx.pushState(getValue());
         }
-        ctx.pushState(this::valueSeparator);
+        ctx.pushState(getValueSeparator());
     }
 
     public boolean handleKey(ParserContext ctx) {
@@ -179,7 +259,7 @@ public class SkipParser implements JsonParser {
         if (Character.isWhitespace(c)) return;
         ctx.popState();
         if (Character.isDigit(c)) {
-            ctx.pushState(this::numberValue);
+            ctx.pushState(getNumberValue());
             appendToken(ctx, c);
         } else {
             throw new RuntimeException("Illegal value syntax at character " + ctx.charCount());
@@ -190,7 +270,7 @@ public class SkipParser implements JsonParser {
         char c = ctx.consume();
         if (c == '.') {
             ctx.popState();
-            ctx.pushState(this::floatValue);
+            ctx.pushState(getFloatValue());
             appendToken(ctx, c);
         } else if (Character.isDigit(c)) {
             appendToken(ctx, c);
@@ -206,7 +286,7 @@ public class SkipParser implements JsonParser {
         if (Character.isWhitespace(c)) return;
         ctx.popState();
         if (Character.isDigit(c)) {
-            ctx.pushState(this::integerValue);
+            ctx.pushState(getIntegerValue());
             appendToken(ctx, c);
         } else {
             throw new RuntimeException("Illegal value syntax at character " + ctx.charCount());
@@ -260,7 +340,7 @@ public class SkipParser implements JsonParser {
         char c = ctx.consume();
         if (Character.isWhitespace(c)) return;
         if (c == ',') {
-            ctx.pushState(this::keyStart);
+            ctx.pushState(getKeyStart());
         } else if (c == '}') {
             ctx.popState();
             return;

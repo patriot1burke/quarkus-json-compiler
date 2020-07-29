@@ -17,6 +17,19 @@ public class CollectionParser extends ObjectParser {
         this.valueState = this::value;
     }
 
+    // we do these get methods to avoid object creations
+    // as method references create a new object every time
+    private ParserState start  = this::start;
+    @Override
+    public ParserState getStart() {
+        return start;
+    }
+    private ParserState addListValue  = this::addListValue;
+    @Override
+    public ParserState getAddListValue() {
+        return addListValue;
+    }
+
     @Override
     public void start(ParserContext ctx) {
         startList(ctx);

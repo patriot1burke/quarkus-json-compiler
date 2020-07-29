@@ -6,7 +6,7 @@ public class ParserContext {
     protected int charCount = 0;
     protected Stack<ParserState> state = new Stack<>();
     protected Stack<Object> target = new Stack<>();
-    protected StringBuffer token;
+    protected StringBuilder token;
     protected char curr;
     protected boolean consumed;
 
@@ -20,13 +20,13 @@ public class ParserContext {
         curr = c;
     }
 
-    public StringBuffer token() {
-        if (token == null) token = new StringBuffer();
+    public StringBuilder token() {
+        if (token == null) token = new StringBuilder();
         return token;
     }
 
     public String popToken() {
-        StringBuffer tmp = token;
+        StringBuilder tmp = token;
         token = null;
         return tmp.toString();
     }

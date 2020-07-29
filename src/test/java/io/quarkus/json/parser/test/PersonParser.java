@@ -5,6 +5,7 @@ import io.quarkus.json.parser.ContextValue;
 import io.quarkus.json.parser.MapParser;
 import io.quarkus.json.parser.ObjectParser;
 import io.quarkus.json.parser.ParserContext;
+import io.quarkus.json.parser.ParserState;
 import io.quarkus.json.parser.SkipParser;
 
 import java.util.HashMap;
@@ -25,111 +26,144 @@ public class PersonParser extends ObjectParser {
     public boolean handleKey(ParserContext ctx) {
         String key = ctx.popToken();
         if (key.equals("name")) {
-            ctx.pushState(this::nameEnd);
-            ctx.pushState(this::startStringValue);
+            ctx.pushState(nameEnd.INSTANCE);
+            ctx.pushState(getStartStringValue());
         } else if (key.equals("age")) {
-            ctx.pushState(this::ageEnd);
-            ctx.pushState(this::startNumberValue);
+            ctx.pushState(ageEnd.INSTANCE);
+            ctx.pushState(getStartNumberValue());
         } else if (key.equals("money")) {
-            ctx.pushState(this::moneyEnd);
-            ctx.pushState(this::startNumberValue);
+            ctx.pushState(moneyEnd.INSTANCE);
+            ctx.pushState(getStartNumberValue());
         } else if (key.equals("married")) {
-            ctx.pushState(this::marriedEnd);
-            ctx.pushState(this::startBooleanValue);
+            ctx.pushState(marriedEnd.INSTANCE);
+            ctx.pushState(getStartBooleanValue());
         } else if (key.equals("intMap")) {
             ctx.pushTarget(new HashMap());
-            ctx.pushState(this::intMapEnd);
+            ctx.pushState(intMapEnd.INSTANCE);
             ctx.pushState(new MapParser(ContextValue.STRING_VALUE, ContextValue.INT_VALUE,
-                    ObjectParser.PARSER::startIntegerValue)::start);
+                    ObjectParser.PARSER.getStartIntegerValue()).getStart());
         }
         else if (key.equals("dad")) {
-            ctx.pushState(this::dadEnd);
+            ctx.pushState(dadEnd.INSTANCE);
             ctx.pushState(PersonParser.PARSER::start);
         } else if (key.equals("kids")) {
             ctx.pushTarget(new HashMap());
-            ctx.pushState(this::kidsEnd);
+            ctx.pushState(kidsEnd.INSTANCE);
             ctx.pushState(new MapParser(ContextValue.STRING_VALUE,
                     ContextValue.OBJECT_VALUE,
-                    PersonParser.PARSER::start)::start);
+                    PersonParser.PARSER.getStart()).getStart());
 
         } else if (key.equals("siblings")) {
             ctx.pushTarget(new LinkedList<>());
-            ctx.pushState(this::siblingsEnd);
+            ctx.pushState(siblingsEnd.INSTANCE);
             ctx.pushState(new CollectionParser(ContextValue.OBJECT_VALUE,
-                    PersonParser.PARSER::start)::start);
+                    PersonParser.PARSER.getStart()).getStart());
         } else if (key.equals("pets")) {
             ctx.pushTarget(new LinkedList());
-            ctx.pushState(this::petsEnd);
+            ctx.pushState(petsEnd.INSTANCE);
             ctx.pushState(new CollectionParser(ContextValue.STRING_VALUE,
-                    ObjectParser.PARSER::startStringValue)::start);
+                    ObjectParser.PARSER.getStartStringValue()).getStart());
         }
         else {
-            ctx.pushState(SkipParser.PARSER::value);
+            ctx.pushState(SkipParser.PARSER.getValue());
         }
         return true;
     }
 
-    public void siblingsEnd(ParserContext ctx) {
-        ctx.popState();
-        List<Person> siblings = ctx.popTarget();
-        Person person = ctx.target();
-        person.setSiblings(siblings);
+    static class siblingsEnd implements ParserState {
+        public static final siblingsEnd INSTANCE=new siblingsEnd();
+        @Override
+        public void parse(ParserContext ctx) {
+            ctx.popState();
+            List<Person> siblings = ctx.popTarget();
+            Person person = ctx.target();
+            person.setSiblings(siblings);
+        }
     }
 
-    public void petsEnd(ParserContext ctx) {
-        ctx.popState();
-        List<String> pets = ctx.popTarget();
-        Person person = ctx.target();
-        person.setPets(pets);
+    static class petsEnd implements ParserState {
+        public static final petsEnd INSTANCE = new petsEnd();
+        @Override
+        public void parse(ParserContext ctx) {
+            ctx.popState();
+            List<String> pets = ctx.popTarget();
+            Person person = ctx.target();
+            person.setPets(pets);
+        }
     }
 
-    public void kidsEnd(ParserContext ctx) {
-        ctx.popState();
-        Map<String, Person> kids = ctx.popTarget();
-        Person person = ctx.target();
-        person.setKids(kids);
+    static class kidsEnd implements ParserState {
+        public static final kidsEnd INSTANCE = new kidsEnd();
+        @Override
+        public void parse(ParserContext ctx) {
+            ctx.popState();
+            Map<String, Person> kids = ctx.popTarget();
+            Person person = ctx.target();
+            person.setKids(kids);
+        }
     }
 
-
-    public void dadEnd(ParserContext ctx) {
-        ctx.popState();
-        Person dad = ctx.popTarget();
-        Person person = ctx.target();
-        person.setDad(dad);
+    static class dadEnd implements ParserState {
+        public static final dadEnd INSTANCE = new dadEnd();
+        @Override
+        public void parse(ParserContext ctx) {
+            ctx.popState();
+            Person dad = ctx.popTarget();
+            Person person = ctx.target();
+            person.setDad(dad);
+        }
     }
 
-    public void intMapEnd(ParserContext ctx) {
-        ctx.popState();
-        Map<String, Integer> intMap = ctx.popTarget();
-        Person person = ctx.target();
-        person.setIntMap(intMap);
+    static class intMapEnd implements ParserState {
+        public static final intMapEnd INSTANCE = new intMapEnd();
+        @Override
+        public void parse(ParserContext ctx) {
+            ctx.popState();
+            Map<String, Integer> intMap = ctx.popTarget();
+            Person person = ctx.target();
+            person.setIntMap(intMap);
+        }
     }
 
-    public void nameEnd(ParserContext ctx) {
-        ctx.popState();
-        Person person = ctx.target();
-        person.setName(ctx.popToken());
-    }
-    
-    public void ageEnd(ParserContext ctx) {
-        ctx.popState();
-        Integer value = Integer.valueOf(ctx.popToken());
-        Person person = ctx.target();
-        person.setAge(value);
+    static class nameEnd implements ParserState {
+        public static final nameEnd INSTANCE = new nameEnd();
+        @Override
+        public void parse(ParserContext ctx) {
+            ctx.popState();
+            Person person = ctx.target();
+            person.setName(ctx.popToken());
+        }
     }
 
-
-    public void moneyEnd(ParserContext ctx) {
-        ctx.popState();
-        Float value = Float.valueOf(ctx.popToken());
-        Person person = ctx.target();
-        person.setMoney(value);
-    }
-    
-    public void marriedEnd(ParserContext ctx) {
-        ctx.popState();
-        Person person = ctx.target();
-        person.setMarried(Boolean.parseBoolean(ctx.popToken()));
+    static class ageEnd implements ParserState {
+        public static final ageEnd INSTANCE = new ageEnd();
+        @Override
+        public void parse(ParserContext ctx) {
+            ctx.popState();
+            Integer value = Integer.valueOf(ctx.popToken());
+            Person person = ctx.target();
+            person.setAge(value);
+        }
     }
 
+    static class moneyEnd implements ParserState {
+        public static final moneyEnd INSTANCE = new moneyEnd();
+        @Override
+        public void parse(ParserContext ctx) {
+            ctx.popState();
+            Float value = Float.valueOf(ctx.popToken());
+            Person person = ctx.target();
+            person.setMoney(value);
+        }
+    }
+
+    static class marriedEnd implements ParserState {
+        public static final marriedEnd INSTANCE = new marriedEnd();
+        @Override
+        public void parse(ParserContext ctx) {
+            ctx.popState();
+            Person person = ctx.target();
+            person.setMarried(Boolean.parseBoolean(ctx.popToken()));
+        }
+    }
 }

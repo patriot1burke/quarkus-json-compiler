@@ -25,7 +25,15 @@ public class GenericParser extends SkipParser implements JsonParser {
     public void beginList(ParserContext ctx) {
         ctx.pushTarget(new LinkedList());
     }
+    // we do these get methods to avoid object creations
+    // as method references create a new object every time
+    private ParserState addListValue  = this::addListValue;
+    @Override
+    public ParserState getAddListValue() {
+        return addListValue;
+    }
 
+    @Override
     public void addListValue(ParserContext ctx) {
         ctx.popState();
         Object val = ctx.popTarget();
