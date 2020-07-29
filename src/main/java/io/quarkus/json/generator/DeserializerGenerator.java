@@ -3,13 +3,19 @@ package io.quarkus.json.generator;
 import java.io.PrintWriter;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.time.OffsetDateTime;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 public class DeserializerGenerator {
     private PrintWriter writer;
     int indent;
+    Map<Class, List<Type>> needGenerator = new HashMap<>();
 
     void indent() {
         for (int i = 0; i < indent; i++) {
@@ -49,18 +55,18 @@ public class DeserializerGenerator {
         }
     }
 
-    public static String name(Class clz) {
+    public static String name(Class clz, Type genericType) {
         return clz.getSimpleName() + "__Parser";
     }
 
-    public static String fqn(Class clz) {
+    public static String fqn(Class clz, Type genericType) {
         return clz.getName() + "__Parser";
     }
 
     List<Setter> setters = new LinkedList<>();
 
     public void generate(Class clz, Type genericType) {
-        String parser = name(clz);
+        String parser = name(clz, genericType);
         findSetters(clz);
 
         indentln("package " + clz.getPackage().getName());
@@ -96,6 +102,7 @@ public class DeserializerGenerator {
                 }
                 println("if (key.equals(\"" + setter.name + "\")) {");
                 indent++;
+                outputSetter(setter);
                 indent--;
                 indent("}");
             }
@@ -104,12 +111,164 @@ public class DeserializerGenerator {
         indentln("return true;");
         indent--;
         indentln("}");
+    }
 
+    public void outputSetter(Setter setter) {
+        Class clz = setter.type;
+        indentln("ctx.pushState(" + setter.name + "End);");
+        if (String.class.equals(clz)
+                || clz.equals(char.class) || clz.equals(Character.class)
+                || clz.equals(OffsetDateTime.class)
+        ) {
+            indentln("ctx.pushState(getStartStringValue());");
+        }
+        if (clz.equals(long.class) || clz.equals(Long.class)
+                || clz.equals(int.class) || clz.equals(Integer.class)
+                || clz.equals(short.class) || clz.equals(Short.class)
+                || clz.equals(byte.class) || clz.equals(Byte.class)
+                || clz.equals(float.class) || clz.equals(Float.class)
+                || clz.equals(double.class) || clz.equals(Double.class)
+        ) {
+            indentln("ctx.pushState(getStartNumberValue());");
+        } else if (clz.equals(boolean.class) || clz.equals(Boolean.class)) {
+            indentln("ctx.pushState(getStartBooleanValue());");
+        } else if (Map.class.isAssignableFrom(clz)) {
+            outputMapSetter(setter);
+        } else if (Collection.class.isAssignableFrom(clz)) {
+            outputCollectionSetter(setter);
+        } else {
+            outputObjectSetter(setter);
+        }
+    }
 
+    public String contextValue(Class clz, boolean isKey) {
+        if (String.class.equals(clz)) {
+            return "ContextValue.STRING_VALUE";
+        } else if (clz.equals(char.class) || clz.equals(Character.class)) {
+            return "ContextValue.CHARACTER_VALUE";
+        } else if (clz.equals(OffsetDateTime.class)) {
+            if (isKey) {
+                throw new RuntimeException("OffsetDateTime is not supported as a Map key type");
+            }
+            return "ContextValue.OFFSET_DATETIME_VALUE";
+        } else if (clz.equals(long.class) || clz.equals(Long.class)) {
+            return "ContextValue.LONG_VALUE";
+        } else if (clz.equals(int.class) || clz.equals(Integer.class)) {
+            return "ContextValue.INT_VALUE";
+        } else if (clz.equals(short.class) || clz.equals(Short.class)) {
+            return "ContextValue.SHORT_VALUE";
+        } else if (clz.equals(byte.class) || clz.equals(Byte.class)) {
+            return "ContextValue.BYTE_VALUE";
+        } else if (clz.equals(float.class) || clz.equals(Float.class)) {
+            return "ContextValue.FLOAT_VALUE";
+        } else if (clz.equals(double.class) || clz.equals(Double.class)) {
+            return "ContextValue.DOUBLE_VALUE";
+        } else if (clz.equals(boolean.class) || clz.equals(Boolean.class)) {
+            return "ContextValue.BOOLEAN_VALUE";
+        } else if (clz.equals(Object.class)) {
+            return isKey ? "ContextValue.STRING_VALUE" : "ContextValue.OBJECT_VALUE";
+        } else {
+            if (isKey) {
+                throw new RuntimeException(clz.getName() + " is not supported as a Map key type");
+            }
+            return "ContextValue.OBJECT_VALUE";
+        }
+    }
 
+    public String valueState(Class clz, Type genericType) {
+        if (String.class.equals(clz)) {
+            return "ObjectParser.PARSER.getStartStringValue()";
+        } else if (clz.equals(char.class) || clz.equals(Character.class)) {
+            return "ObjectParser.PARSER.getStartStringValue()";
+        } else if (clz.equals(OffsetDateTime.class)) {
+            return "ObjectParser.PARSER.getStartStringValue()";
+        } else if (clz.equals(long.class) || clz.equals(Long.class)) {
+            return "ObjectParser.PARSER.getStartIntegerValue()";
+        } else if (clz.equals(int.class) || clz.equals(Integer.class)) {
+            return "ObjectParser.PARSER.getStartIntegerValue()";
+        } else if (clz.equals(short.class) || clz.equals(Short.class)) {
+            return "ObjectParser.PARSER.getStartIntegerValue()";
+        } else if (clz.equals(byte.class) || clz.equals(Byte.class)) {
+            return "ObjectParser.PARSER.getStartIntegerValue()";
+        } else if (clz.equals(float.class) || clz.equals(Float.class)) {
+            return "ObjectParser.PARSER.getStartNumberValue()";
+        } else if (clz.equals(double.class) || clz.equals(Double.class)) {
+            return "ObjectParser.PARSER.getStartNumberValue()";
+        } else if (clz.equals(boolean.class) || clz.equals(Boolean.class)) {
+            return "ObjectParser.PARSER.getStartBooleanValue()";
+        } else if (clz.equals(Object.class)) {
+            return "GenericParser.PARSER.getStart()";
+        } else if (Collection.class.isAssignableFrom(clz)) {
+            throw new RuntimeException("Collection not supported yet as a collection or map value type");
+        } else if (Map.class.isAssignableFrom(clz)) {
+            throw new RuntimeException("Map not supported yet as a collection or map value type");
+        } else {
+            return fqn(clz, genericType) + ".PARSER.getStart()";
+        }
+    }
 
+    public void outputMapSetter(Setter setter) {
+        Class keyType = Object.class;
+        Class valueType = Object.class;
+        Type valueGenericType = null;
 
+        if (setter.genericType != null && setter.genericType instanceof ParameterizedType) {
+            ParameterizedType pt = (ParameterizedType)setter.genericType;
+            keyType = Reflections.getRawType(pt.getActualTypeArguments()[0]);
+            valueType = Reflections.getRawType(pt.getActualTypeArguments()[1]);
+            valueGenericType = pt.getActualTypeArguments()[1];
+        }
 
+        String keyContextValue = contextValue(keyType, true);
+        String contextValue = contextValue(valueType, false);
+        String valueState = valueState(valueType, valueGenericType);
+        String mapType = setter.type.getName();
+        if (setter.type.equals(Map.class)) {
+            mapType = "java.util.HashMap";
+        } else if (setter.type.isInterface()) {
+            throw new RuntimeException("Interface not support for property: " + setter.name);
+        }
+        indentln("ctx.pushTarget(new " + mapType + "());");
+        indentln("ctx.pushState(new MapParser(" + keyContextValue + ",");
+        indent++;
+        indentln(contextValue + ",");
+        indentln(valueState + ").getStart()");
+        indent--;
+        indentln(");");
+    }
+
+    public void outputCollectionSetter(Setter setter) {
+        Class valueType = Object.class;
+        Type valueGenericType = null;
+
+        if (setter.genericType != null && setter.genericType instanceof ParameterizedType) {
+            ParameterizedType pt = (ParameterizedType)setter.genericType;
+            valueType = Reflections.getRawType(pt.getActualTypeArguments()[0]);
+            valueGenericType = pt.getActualTypeArguments()[0];
+        }
+
+        String contextValue = contextValue(valueType, false);
+        String valueState = valueState(valueType, valueGenericType);
+        String collectionType = setter.type.getName();
+        if (setter.type.equals(List.class) || setter.type.equals(Collection.class)) {
+            collectionType = "java.util.LinkedList";
+        } else if (setter.type.isInterface()) {
+            throw new RuntimeException("Interface not support for property: " + setter.name);
+        }
+        indentln("ctx.pushTarget(new " + collectionType + "());");
+        indentln("ctx.pushState(new CollectionParser(" + contextValue + ",");
+        indent++;
+        indentln(valueState + ").getStart()");
+        indent--;
+        indentln(");");
+    }
+
+    public void outputObjectSetter(Setter setter) {
+        if (setter.type.equals(Object.class)) {
+            indentln("ctx.pushState(GenericParser.PARSER.getStart());");
+        } else {
+            indentln("ctx.pushState(" + fqn(setter.type, setter.genericType) + ".PARSER.getStart());");
+        }
     }
 
     private void findSetters(Class clz) {

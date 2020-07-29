@@ -1,5 +1,7 @@
 package io.quarkus.json.parser;
 
+import java.time.OffsetDateTime;
+
 public interface ContextValue {
     Object value(ParserContext ctx);
 
@@ -10,6 +12,7 @@ public interface ContextValue {
     ContextValue LONG_VALUE = (ctx) -> Long.valueOf(ctx.popToken());
     ContextValue FLOAT_VALUE = (ctx) -> Float.valueOf(ctx.popToken());
     ContextValue DOUBLE_VALUE = (ctx) -> Double.valueOf(ctx.popToken());
+    ContextValue OFFSET_DATETIME_VALUE = (ctx) -> OffsetDateTime.parse(ctx.popToken());
     ContextValue STRING_VALUE = (ctx) -> ctx.popToken();
     ContextValue OBJECT_VALUE = (ctx) -> ctx.popTarget();
     ContextValue CHAR_VALUE = (ctx) -> {
