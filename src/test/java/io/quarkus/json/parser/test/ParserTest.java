@@ -12,7 +12,6 @@ import java.util.Map;
 public class ParserTest {
 
     /**
-     * skip [map, list, value]
      * map nonstring-key, object value, list value
      * list value, object
      */
@@ -180,6 +179,16 @@ public class ParserTest {
         Assertions.assertEquals("John", ((Map)list.get(4)).get("name"));
         Assertions.assertEquals(true, ((Map)list.get(4)).get("married"));
 
+    }
+
+    private Runnable functionPtr = this::testGenericList;
+
+    @Test
+    public void testPtrEquivalence() {
+        Runnable foo = functionPtr;
+        Runnable bar = functionPtr;
+
+        Assertions.assertTrue(foo == bar);
     }
 
 }
