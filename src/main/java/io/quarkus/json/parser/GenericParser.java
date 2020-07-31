@@ -37,7 +37,7 @@ public class GenericParser extends SkipParser implements JsonParser {
             Map map = ctx1.target();
             map.put(key, val);
         });
-        ctx.pushState(this::value);
+        ctx.pushState(getValue());
         return true;
     }
 

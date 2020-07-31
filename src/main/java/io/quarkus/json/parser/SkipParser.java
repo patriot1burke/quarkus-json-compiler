@@ -336,6 +336,7 @@ public class SkipParser implements JsonParser {
         if (c == 0) return;
         if (c == INT_COMMA) {
             ctx.pushState(getKeyStart());
+            keyStart(ctx);
         } else if (c == INT_RCURLY) {
             ctx.popState();
             return;
