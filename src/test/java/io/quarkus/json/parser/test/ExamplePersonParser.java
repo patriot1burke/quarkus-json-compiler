@@ -7,6 +7,7 @@ import io.quarkus.json.parser.ObjectParser;
 import io.quarkus.json.parser.ParserContext;
 import io.quarkus.json.parser.ParserState;
 import io.quarkus.json.parser.SkipParser;
+import io.quarkus.json.parser.Symbol;
 
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -34,80 +35,53 @@ public class ExamplePersonParser extends ObjectParser {
 
     @Override
     public boolean handleKey(ParserContext ctx) {
-        String key = ctx.popToken();
-        if (key.equals("age")) {
-            ageBegin(ctx);
-        } else if (key.equals("dad")) {
-            dadBegin(ctx);
-        } else if (key.equals("intMap")) {
-            intMapBegin(ctx);
-        } else if (key.equals("kids")) {
-            kidsBegin(ctx);
-        } else if (key.equals("married")) {
-            marriedBegin(ctx);
-        } else if (key.equals("money")) {
-            moneyBegin(ctx);
-        } else if (key.equals("name")) {
-            nameBegin(ctx);
-        } else if (key.equals("pets")) {
-            petsBegin(ctx);
-        } else if (key.equals("siblings")) {
-            siblingsBegin(ctx);
-        }
-        else {
+        if (ctx.tokenEquals(ageSymbol)) {
+            ctx.pushState(ageEnd);
+            ctx.pushState(getStartNumberValue());
+        } else if (ctx.tokenEquals(dadSymbol)) {
+            ctx.pushState(dadEnd);
+            ctx.pushState(ExamplePersonParser.PARSER.getStart());
+        } else if (ctx.tokenEquals(intMapSymbol)) {
+            ctx.pushTarget(new HashMap());
+            ctx.pushState(intMapEnd);
+            ctx.pushState(intMapStart);
+        } else if (ctx.tokenEquals(kidsSymbol)) {
+            ctx.pushTarget(new HashMap());
+            ctx.pushState(kidsEnd);
+            ctx.pushState(kidsStart);
+        } else if (ctx.tokenEquals(marriedSymbol)) {
+            ctx.pushState(marriedEnd);
+            ctx.pushState(getStartBooleanValue());
+        } else if (ctx.tokenEquals(moneySymbol)) {
+            ctx.pushState(moneyEnd);
+            ctx.pushState(getStartNumberValue());
+        } else if (ctx.tokenEquals(nameSymbol)) {
+            ctx.pushState(nameEnd);
+            ctx.pushState(getStartStringValue());
+        } else if (ctx.tokenEquals(petsSymbol)) {
+            ctx.pushTarget(new LinkedList());
+            ctx.pushState(petsEnd);
+            ctx.pushState(petsStart);
+        } else if (ctx.tokenEquals(siblingsSymbol)) {
+            ctx.pushTarget(new LinkedList<>());
+            ctx.pushState(siblingsEnd);
+            ctx.pushState(siblingsStart);
+        } else {
             ctx.pushState(SkipParser.PARSER.getValue());
         }
+        ctx.clearToken();
         return true;
     }
 
-    public void siblingsBegin(ParserContext ctx) {
-        ctx.pushTarget(new LinkedList<>());
-        ctx.pushState(siblingsEnd);
-        ctx.pushState(siblingsStart);
-    }
-
-    public void petsBegin(ParserContext ctx) {
-        ctx.pushTarget(new LinkedList());
-        ctx.pushState(petsEnd);
-        ctx.pushState(petsStart);
-    }
-
-    public void nameBegin(ParserContext ctx) {
-        ctx.pushState(nameEnd);
-        ctx.pushState(getStartStringValue());
-    }
-
-    public void moneyBegin(ParserContext ctx) {
-        ctx.pushState(moneyEnd);
-        ctx.pushState(getStartNumberValue());
-    }
-
-    public void marriedBegin(ParserContext ctx) {
-        ctx.pushState(marriedEnd);
-        ctx.pushState(getStartBooleanValue());
-    }
-
-    public void kidsBegin(ParserContext ctx) {
-        ctx.pushTarget(new HashMap());
-        ctx.pushState(kidsEnd);
-        ctx.pushState(kidsStart);
-    }
-
-    public void intMapBegin(ParserContext ctx) {
-        ctx.pushTarget(new HashMap());
-        ctx.pushState(intMapEnd);
-        ctx.pushState(intMapStart);
-    }
-
-    public void dadBegin(ParserContext ctx) {
-        ctx.pushState(dadEnd);
-        ctx.pushState(ExamplePersonParser.PARSER.getStart());
-    }
-
-    public void ageBegin(ParserContext ctx) {
-        ctx.pushState(ageEnd);
-        ctx.pushState(getStartNumberValue());
-    }
+    static Symbol ageSymbol = new Symbol("age");
+    static Symbol dadSymbol = new Symbol("dad");
+    static Symbol intMapSymbol = new Symbol("intMap");
+    static Symbol kidsSymbol = new Symbol("kids");
+    static Symbol marriedSymbol = new Symbol("married");
+    static Symbol moneySymbol = new Symbol("money");
+    static Symbol nameSymbol = new Symbol("name");
+    static Symbol petsSymbol = new Symbol("pets");
+    static Symbol siblingsSymbol = new Symbol("siblings");
 
     static ParserState siblingsEnd = (ctx) -> {
         ctx.popState();
@@ -152,7 +126,7 @@ public class ExamplePersonParser extends ObjectParser {
 
     static ParserState ageEnd = (ctx) -> {
         ctx.popState();
-        int value = Integer.parseInt(ctx.popToken());
+        int value = ctx.popIntPrimitive();
         Person person = ctx.target();
         person.setAge(value);
     };

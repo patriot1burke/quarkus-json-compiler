@@ -63,6 +63,15 @@ public class ParserContext {
         return 0;
     }
 
+    public boolean tokenEquals(Symbol symbol) {
+        if (tokenEnd - tokenStart != symbol.getUtf8().length) return false;
+
+        for (int i = 0; i < symbol.utf8.length; i++) {
+            if (symbol.utf8[i] != buffer[tokenStart + i]) return false;
+        }
+        return true;
+    }
+
     public void startToken(int offset) {
         tokenStart = ptr + offset;
     }
@@ -71,12 +80,68 @@ public class ParserContext {
         tokenEnd = ptr - 1;
     }
 
+    public void clearToken() {
+        tokenStart = -1;
+        tokenEnd = -1;
+    }
+
+
     public String popToken() {
         if (tokenStart < 0) throw new RuntimeException("Token not started.");
         if (tokenEnd < 0) throw new RuntimeException("Token not ended.");
         char[] charbuf = new char[tokenEnd - tokenStart];
         for (int i = 0; i < tokenEnd - tokenStart; i++) charbuf[i] = (char)(buffer[tokenStart + i] & 0xFF);
+        clearToken();
         return new String(charbuf);
+    }
+
+    public int popIntPrimitive() {
+        return (int)popLongPrimitive();
+    }
+
+    public long popLongPrimitive() {
+        boolean negative = false;
+        int i = 0;
+        int len = tokenEnd - tokenStart;
+        long limit = -9223372036854775807L;
+        if (len <= 0) {
+            return 0;
+        } else {
+            int firstChar = buffer[tokenStart] & 0xFF;
+            if (firstChar < INT_0) {
+                if (firstChar == INT_MINUS) {
+                    negative = true;
+                    limit = -9223372036854775808L;
+                } else if (firstChar != INT_PLUS) {
+                    throw new RuntimeException("Illegal number format at character " + charCount);
+                }
+
+                if (len == 1) {
+                    throw new RuntimeException("Illegal number format at character " + charCount);
+                }
+
+                ++i;
+            }
+
+            long multmin = limit / (long)10;
+
+            long result;
+            int digit;
+            for(result = 0L; i < len; result -= (long)digit) {
+                digit = (buffer[i++ + tokenStart] & 0xFF) - INT_0;
+                if (digit < 0 || result < multmin) {
+                    throw new RuntimeException("Illegal number format at character " + charCount);
+                }
+
+                result *= (long)10;
+                if (result < limit + (long)digit) {
+                    throw new RuntimeException("Illegal number format at character " + charCount);
+                }
+            }
+
+            clearToken();
+            return negative ? result : -result;
+        }
     }
 
     public void read(byte[] buffer) {

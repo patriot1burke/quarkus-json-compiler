@@ -215,9 +215,7 @@ public class SkipParser implements JsonParser {
         if (c != INT_QUOTE) throw new RuntimeException("Expected '\"' at character " + ctx.charCount());
         ctx.startToken(0);
         ctx.pushState(getKey());
-        if (!ctx.isBufferEmpty()) {
-            key(ctx);
-        }
+        key(ctx);
     }
 
     public void key(ParserContext ctx) {
@@ -229,6 +227,7 @@ public class SkipParser implements JsonParser {
             ctx.pushState(getValue());
         }
         ctx.pushState(getValueSeparator());
+        valueSeparator(ctx);
     }
 
     public boolean handleKey(ParserContext ctx) {

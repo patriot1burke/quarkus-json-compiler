@@ -7,9 +7,9 @@ public interface ContextValue {
 
     ContextValue BYTE_VALUE = (ctx) -> Byte.valueOf(ctx.popToken());
     ContextValue BOOLEAN_VALUE = (ctx) -> Boolean.valueOf(ctx.popToken());
-    ContextValue INT_VALUE = (ctx) -> Integer.valueOf(ctx.popToken());
+    ContextValue INT_VALUE = (ctx) -> ctx.popIntPrimitive();
     ContextValue SHORT_VALUE = (ctx) -> Short.valueOf(ctx.popToken());
-    ContextValue LONG_VALUE = (ctx) -> Long.valueOf(ctx.popToken());
+    ContextValue LONG_VALUE = (ctx) -> ctx.popLongPrimitive();
     ContextValue FLOAT_VALUE = (ctx) -> Float.valueOf(ctx.popToken());
     ContextValue DOUBLE_VALUE = (ctx) -> Double.valueOf(ctx.popToken());
     ContextValue OFFSET_DATETIME_VALUE = (ctx) -> OffsetDateTime.parse(ctx.popToken());
