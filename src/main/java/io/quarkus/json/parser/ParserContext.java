@@ -41,6 +41,23 @@ public class ParserContext {
         }
         return 0;
     }
+    public int skipDigits() {
+        while (ptr < buffer.length) {
+            int ch = buffer[ptr++] & 0xFF;
+            if (isDigit(ch)) continue;
+            return ch;
+        }
+        return 0;
+    }
+
+    public int skipAlphabetic() {
+        while (ptr < buffer.length) {
+            int ch = buffer[ptr++] & 0xFF;
+            if (Character.isAlphabetic(ch)) continue;
+            return ch;
+        }
+        return 0;
+    }
 
     public void startToken(int offset) {
         tokenStart = ptr + offset;

@@ -143,6 +143,7 @@ public class SkipParser implements JsonParser {
         if (c== 't' || c == 'f') {
             ctx.pushState(getBooleanValue());
             ctx.startToken(-1);
+            booleanValue(ctx);
         } else {
             throw new RuntimeException("Illegal value syntax at character " + ctx.charCount());
         }
@@ -159,9 +160,11 @@ public class SkipParser implements JsonParser {
         } else if (isDigit(c) || c == INT_MINUS || c == INT_PLUS) {
             ctx.pushState(getNumberValue());
             ctx.startToken(-1);
+            numberValue(ctx);
         } else if (c == INT_t || c == INT_f) {
             ctx.pushState(getBooleanValue());
             ctx.startToken(-1);
+            booleanValue(ctx);
         } else if (c == INT_LCURLY) {
             beginObject(ctx);
             ctx.pushState(getNextKey());
@@ -263,18 +266,18 @@ public class SkipParser implements JsonParser {
         if (isDigit(c) || c == INT_MINUS || c == INT_PLUS) {
             ctx.pushState(getNumberValue());
             ctx.startToken(-1);
+            numberValue(ctx);
         } else {
             throw new RuntimeException("Illegal value syntax at character " + ctx.charCount());
         }
     }
 
     public void numberValue(ParserContext ctx) {
-        int c = ctx.consume();
+        int c = ctx.skipDigits();
         if (c == 0) return;
         if (c == INT_PERIOD) {
             ctx.popState();
             ctx.pushState(getFloatValue());
-        } else if (isDigit(c)) {
         } else {
             ctx.endToken();
             endNumberValue(ctx);
@@ -290,21 +293,19 @@ public class SkipParser implements JsonParser {
         if (isDigit(c) || c == INT_MINUS || c == INT_PLUS) {
             ctx.pushState(getIntegerValue());
             ctx.startToken(-1);
+            integerValue(ctx);
         } else {
             throw new RuntimeException("Illegal value syntax at character " + ctx.charCount());
         }
     }
 
     public void integerValue(ParserContext ctx) {
-        int c = ctx.consume();
+        int c = ctx.skipDigits();
         if (c == 0) return;
-        if (isDigit(c)) {
-        } else {
-            ctx.endToken();
-            endNumberValue(ctx);
-            ctx.rollback();
-            ctx.popState();
-        }
+        ctx.endToken();
+        endNumberValue(ctx);
+        ctx.rollback();
+        ctx.popState();
     }
 
     public void endNumberValue(ParserContext ctx) {
@@ -327,16 +328,14 @@ public class SkipParser implements JsonParser {
     }
 
     public void booleanValue(ParserContext ctx) {
-        int c = ctx.consume();
+        int c = ctx.skipAlphabetic();
         if (c == 0) return;
-        if (Character.isAlphabetic(c)) {
-        } else {
-            ctx.endToken();
-            endBooleanValue(ctx);
-            ctx.rollback();
-            ctx.popState();
-        }
+        ctx.endToken();
+        endBooleanValue(ctx);
+        ctx.rollback();
+        ctx.popState();
     }
+
     public void endBooleanValue(ParserContext ctx) {
 
     }
