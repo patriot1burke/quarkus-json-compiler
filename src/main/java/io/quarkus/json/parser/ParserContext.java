@@ -120,7 +120,6 @@ public class ParserContext {
         throw new RuntimeException("Illegal boolean true value syntax");
     }
 
-
     public int popIntToken() {
         return (int) popLongToken();
     }
