@@ -75,7 +75,7 @@ public class ParserContext {
         if (tokenStart < 0) throw new RuntimeException("Token not started.");
         if (tokenEnd < 0) throw new RuntimeException("Token not ended.");
         char[] charbuf = new char[tokenEnd - tokenStart];
-        for (int i = 0; i < tokenEnd - tokenStart; i++) charbuf[i] = (char)buffer[tokenStart + i];
+        for (int i = 0; i < tokenEnd - tokenStart; i++) charbuf[i] = (char)(buffer[tokenStart + i] & 0xFF);
         return new String(charbuf);
     }
 
