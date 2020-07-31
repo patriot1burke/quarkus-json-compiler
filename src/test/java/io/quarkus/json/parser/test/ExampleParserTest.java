@@ -68,12 +68,7 @@ public class ExampleParserTest {
     public void testParser() {
         ParserContext ctx = ExamplePersonParser.PARSER.parser();
 
-        for (char c : json.toCharArray()) {
-            System.out.write(c);
-            ctx.parse(c);
-        }
-
-        Person person = ctx.target();
+        Person person = ctx.parse(json);
         Assertions.assertEquals("Bill", person.getName());
         Assertions.assertEquals(50, person.getAge());
         Assertions.assertTrue(person.isMarried());
@@ -125,12 +120,7 @@ public class ExampleParserTest {
         JsonParser p = GenericParser.PARSER;
         ParserContext ctx = p.parser();
 
-        for (char c : generic.toCharArray()) {
-            System.out.write(c);
-            ctx.parse(c);
-        }
-
-        Map person = ctx.target();
+        Map person = ctx.parse(generic);
         Assertions.assertEquals("Bill", person.get("name"));
         Assertions.assertEquals(50, person.get("age"));
         Assertions.assertEquals(true, person.get("married"));
@@ -171,12 +161,7 @@ public class ExampleParserTest {
         JsonParser p = GenericParser.PARSER;
         ParserContext ctx = p.parser();
 
-        for (char c : genericList.toCharArray()) {
-            System.out.write(c);
-            ctx.parse(c);
-        }
-
-        List list = ctx.target();
+        List list = ctx.parse(genericList);
         Assertions.assertEquals("one", list.get(0));
         Assertions.assertEquals(2, list.get(1));
         Assertions.assertEquals(3.0F, list.get(2));
@@ -213,7 +198,7 @@ public class ExampleParserTest {
                 .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true);
         ObjectReader reader = mapper.readerFor(Person.class);
         JsonParser parser = ExamplePersonParser.PARSER;
-
+        byte[] array = json.getBytes("UTF-8");
         // warm up
         int ITERATIONS = 100000;
         for (int i = 0; i < ITERATIONS; i++) {

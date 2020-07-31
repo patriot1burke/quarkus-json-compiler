@@ -7,8 +7,4 @@ public class ObjectParser extends SkipParser {
         startObject(ctx);
     }
 
-    @Override
-    public void appendToken(ParserContext ctx, char c) {
-        ctx.token().append(c);
-    }
 }

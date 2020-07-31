@@ -91,12 +91,7 @@ public class DeserializerTest {
         JsonParser parser = (JsonParser)deserializerClass.newInstance();
         ParserContext ctx = parser.parser();
 
-        for (char c : json.toCharArray()) {
-            System.out.write(c);
-            ctx.parse(c);
-        }
-
-        Person person = ctx.target();
+        Person person = ctx.parse(json);
         Assertions.assertEquals("Bill", person.getName());
         Assertions.assertEquals(50, person.getAge());
         Assertions.assertTrue(person.isMarried());

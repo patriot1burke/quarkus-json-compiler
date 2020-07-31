@@ -17,11 +17,6 @@ public class GenericParser extends SkipParser implements JsonParser {
     }
 
     @Override
-    public void appendToken(ParserContext ctx, char c) {
-        ctx.token().append(c);
-    }
-
-    @Override
     public void beginList(ParserContext ctx) {
         ctx.pushTarget(new LinkedList());
     }
