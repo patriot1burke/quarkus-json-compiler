@@ -1,11 +1,11 @@
 package io.quarkus.json.parser;
 
-import java.util.Stack;
+import java.util.ArrayDeque;
 
 public class ParserContext {
     protected int charCount = 0;
-    protected Stack<ParserState> state = new Stack<>();
-    protected Stack<Object> target = new Stack<>();
+    protected ArrayDeque<ParserState> state = new ArrayDeque<>();
+    protected ArrayDeque<Object> target = new ArrayDeque<>();
     protected StringBuilder token;
     protected char curr;
     protected boolean consumed;
@@ -35,8 +35,8 @@ public class ParserContext {
         charCount++;
         consumed = false;
         curr = c;
-        if (state.empty()) {
-            if (Character.isWhitespace(c)) {
+        if (state.isEmpty()) {
+            if (CharCheck.isWhitespace(c)) {
                 return;
             } else {
                 throw new RuntimeException("Illegal character at " + charCount);
@@ -45,6 +45,13 @@ public class ParserContext {
         while (!consumed) {
             state.peek().parse(this);
         }
+    }
+
+    public <T> T parse(String fullJson) {
+        for (char c : fullJson.toCharArray()) {
+            parse(c);
+        }
+        return target();
     }
 
     public int charCount() {

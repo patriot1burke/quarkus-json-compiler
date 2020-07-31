@@ -49,6 +49,7 @@ import javax.tools.ToolProvider;
  */
 public class Compile {
 
+
     public static Class<?> compile(String className, String content, CompileOptions compileOptions) {
         Lookup lookup = MethodHandles.lookup();
         ClassLoader cl = lookup.lookupClass().getClassLoader();
@@ -157,6 +158,17 @@ public class Compile {
             catch (Exception e) {
                 throw new ReflectException("Error while compiling " + className, e);
             }
+        }
+    }
+
+    public static void printCode(String code) {
+        String lines[] = code.split("\\r?\\n");
+        int ln = 1;
+        for (String line : lines) {
+            System.out.print(ln);
+            for (int i = 0; i < (5 - (Integer.toString(ln).length())); i++) System.out.print(' ');
+            System.out.println(line);
+            ln++;
         }
     }
 
@@ -272,5 +284,16 @@ public class Compile {
             return content;
         }
     }
+
+    public static Class<?> compileClass(String className, String content, CompileOptions compileOptions) {
+        try {
+            return compile(className, content, compileOptions);
+        } catch (RuntimeException e) {
+            printCode(content);
+            throw e;
+        }
+
+    }
+
 }
 /* [/java-8] */

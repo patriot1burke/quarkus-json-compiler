@@ -7,6 +7,7 @@ import java.util.Map;
 public class CollectionParser extends ObjectParser {
     ContextValue valueFunction;
     ParserState  valueState;
+    private ParserState addListValue = this::addListValue;
 
     public CollectionParser(ContextValue valueFunction, ParserState valueState) {
         this.valueFunction = valueFunction;
@@ -31,7 +32,7 @@ public class CollectionParser extends ObjectParser {
 
     @Override
     public void listValue(ParserContext ctx) {
-        ctx.pushState(this::addListValue);
+        ctx.pushState(addListValue);
         ctx.pushState(valueState);
     }
 

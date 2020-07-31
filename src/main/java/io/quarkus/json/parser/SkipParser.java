@@ -93,7 +93,7 @@ public class SkipParser implements JsonParser {
 
     public void startObject(ParserContext ctx) {
         char c = ctx.consume();
-        if (Character.isWhitespace(c)) return;
+        if (CharCheck.isWhitespace(c)) return;
         ctx.popState();
         if (c == '{') {
             beginObject(ctx);
@@ -108,7 +108,7 @@ public class SkipParser implements JsonParser {
 
     public void startList(ParserContext ctx) {
         char c = ctx.consume();
-        if (Character.isWhitespace(c)) return;
+        if (CharCheck.isWhitespace(c)) return;
         ctx.popState();
         if (c == '[') {
             beginObject(ctx);
@@ -123,7 +123,7 @@ public class SkipParser implements JsonParser {
 
     public void startStringValue(ParserContext ctx) {
         char c = ctx.consume();
-        if (Character.isWhitespace(c)) return;
+        if (CharCheck.isWhitespace(c)) return;
         ctx.popState();
         if (c == '"') {
             ctx.pushState(getStringValue());
@@ -134,7 +134,7 @@ public class SkipParser implements JsonParser {
 
     public void startBooleanValue(ParserContext ctx) {
         char c = ctx.consume();
-        if (Character.isWhitespace(c)) return;
+        if (CharCheck.isWhitespace(c)) return;
         ctx.popState();
         if (c == 't' || c == 'f') {
             ctx.pushState(getBooleanValue());
@@ -146,7 +146,7 @@ public class SkipParser implements JsonParser {
 
     public void value(ParserContext ctx) {
         char c = ctx.consume();
-        if (Character.isWhitespace(c)) return;
+        if (CharCheck.isWhitespace(c)) return;
         ctx.popState();
         if (c == '"') {
             ctx.pushState(getStringValue());
@@ -184,7 +184,7 @@ public class SkipParser implements JsonParser {
 
     public void nextValue(ParserContext ctx) {
         char c = ctx.consume();
-        if (Character.isWhitespace(c)) return;
+        if (CharCheck.isWhitespace(c)) return;
         if (c == ',') {
             listValue(ctx);
         } else if (c == ']') {
@@ -200,7 +200,7 @@ public class SkipParser implements JsonParser {
 
     public void keyStart(ParserContext ctx) {
         char c = ctx.consume();
-        if (Character.isWhitespace(c)) return;
+        if (CharCheck.isWhitespace(c)) return;
         ctx.popState();
 
         if (c == '}') {
@@ -230,7 +230,7 @@ public class SkipParser implements JsonParser {
 
     public void valueSeparator(ParserContext ctx) {
         char c = ctx.consume();
-        if (Character.isWhitespace(c)) return;
+        if (CharCheck.isWhitespace(c)) return;
         if (c != ':') throw new RuntimeException("Expecting ':' at character " + ctx.charCount());
         ctx.popState();
     }
@@ -256,7 +256,7 @@ public class SkipParser implements JsonParser {
 
     public void startNumberValue(ParserContext ctx) {
         char c = ctx.consume();
-        if (Character.isWhitespace(c)) return;
+        if (CharCheck.isWhitespace(c)) return;
         ctx.popState();
         if (Character.isDigit(c)) {
             ctx.pushState(getNumberValue());
@@ -283,7 +283,7 @@ public class SkipParser implements JsonParser {
 
     public void startIntegerValue(ParserContext ctx) {
         char c = ctx.consume();
-        if (Character.isWhitespace(c)) return;
+        if (CharCheck.isWhitespace(c)) return;
         ctx.popState();
         if (Character.isDigit(c)) {
             ctx.pushState(getIntegerValue());
@@ -338,7 +338,7 @@ public class SkipParser implements JsonParser {
 
     public void nextKey(ParserContext ctx) {
         char c = ctx.consume();
-        if (Character.isWhitespace(c)) return;
+        if (CharCheck.isWhitespace(c)) return;
         if (c == ',') {
             ctx.pushState(getKeyStart());
         } else if (c == '}') {

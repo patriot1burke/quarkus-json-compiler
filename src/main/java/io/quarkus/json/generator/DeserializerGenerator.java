@@ -7,15 +7,25 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.time.OffsetDateTime;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class DeserializerGenerator {
     private PrintWriter writer;
     int indent;
-    Map<Class, List<Type>> needGenerator = new HashMap<>();
+    Set<Class> needDeserializerFor;
+    Class targetType;
+    Type targetGenericType;
+
+    public DeserializerGenerator(PrintWriter writer, Set<Class> needDeserializerFor, Class targetType, Type targetGenericType) {
+        this.writer = writer;
+        this.needDeserializerFor = needDeserializerFor;
+        this.targetType = targetType;
+        this.targetGenericType = targetGenericType;
+    }
 
     void indent() {
         for (int i = 0; i < indent; i++) {
@@ -45,11 +55,13 @@ public class DeserializerGenerator {
     }
     class Setter {
         String name;
+        Method method;
         Class type;
         Type genericType;
 
-        public Setter(String name, Class type, Type genericType) {
+        public Setter(String name, Method method, Class type, Type genericType) {
             this.name = name;
+            this.method = method;
             this.type = type;
             this.genericType = genericType;
         }
@@ -65,11 +77,11 @@ public class DeserializerGenerator {
 
     List<Setter> setters = new LinkedList<>();
 
-    public void generate(Class clz, Type genericType) {
-        String parser = name(clz, genericType);
-        findSetters(clz);
+    public void generate() {
+        String parser = name(targetType, targetGenericType);
+        findSetters(targetType);
 
-        indentln("package " + clz.getPackage().getName());
+        indentln("package " + targetType.getPackage().getName() + ";");
         indentln("import io.quarkus.json.parser.*;");
         println();
         indentln("public class " + parser + " extends ObjectParser {");
@@ -80,7 +92,7 @@ public class DeserializerGenerator {
         indentln("@Override");
         indentln("public void beginObject(ParserContext ctx) {");
         indent++;
-        indentln("ctx.pushTarget(new " + clz.getName() + "());");
+        indentln("ctx.pushTarget(new " + targetType.getName() + "());");
         indent--;
         indentln("}");
         println();
@@ -96,8 +108,7 @@ public class DeserializerGenerator {
                 if (first) {
                     first = false;
                     indent();
-                }
-                else {
+                } else {
                     print(" else ");
                 }
                 println("if (key.equals(\"" + setter.name + "\")) {");
@@ -106,13 +117,78 @@ public class DeserializerGenerator {
                 indent--;
                 indent("}");
             }
-
+            println(" else {");
+            indent++;
+            indentln("ctx.pushState(SkipParser.PARSER::value);");
+            indent--;
+            indentln("}");
         }
         indentln("return true;");
         indent--;
         indentln("}");
+        println();
+        println();
+        for (Setter setter : setters) {
+            indentln("ParserState " + setter.name + "End = (ctx) -> {");
+            indent++;
+            indentln("ctx.popState();");
+            popValue(setter.type, setter.genericType);
+            indentln(targetGenericType.getTypeName() + " target = ctx.target();");
+            indentln("target." + setter.method.getName() + "(value);");
+            indent--;
+            indentln("};");
+        }
+        indent--;
+        println("}");
     }
 
+    public void popValue(Class clz, Type type) {
+        if (String.class.equals(clz)) {
+            indentln("String value = ctx.popToken();");
+        } else if (clz.equals(char.class)) {
+            indentln("String tmp = ctx.popToken();");
+            indentln("if (tmp.length() != 1) throw new RuntimeException(\"Expected character not string\");");
+            indentln("char value = tmp.charAt(0);");
+        } else if (clz.equals(Character.class)) {
+            indentln("String tmp = ctx.popToken()");
+            indentln("if (tmp.length() != 1) throw new RuntimeException(\"Expected character not string\");");
+            indentln("Character value = tmp.charAt(0);");
+        } else if (clz.equals(OffsetDateTime.class)) {
+            indentln("java.time.OffsetDateTime value = java.time.OffsetDateTime.parse(ctx.popToken());");
+        } else if (clz.equals(long.class)) {
+            indentln("long value = Long.parseLong(ctx.popToken());");
+        } else if (clz.equals(Long.class)) {
+            indentln("Long value = Long.valueOf(ctx.popToken());");
+        } else if (clz.equals(int.class)) {
+            indentln("int value = Integer.parseInt(ctx.popToken());");
+        } else if (clz.equals(Integer.class)) {
+            indentln("Integer value = Integer.valueOf(ctx.popToken());");
+        } else if (clz.equals(short.class)) {
+            indentln("short value = Short.parseShort(ctx.popToken());");
+        } else if (clz.equals(Short.class)) {
+            indentln("Short value = Short.valueOf(ctx.popToken());");
+        } else if (clz.equals(byte.class)) {
+            indentln("byte value = Byte.parseByte(ctx.popToken());");
+        } else if (clz.equals(Byte.class)) {
+            indentln("Byte value = Byte.valueOf(ctx.popToken());");
+        } else if (clz.equals(float.class)) {
+            indentln("float value = Float.parseFloat(ctx.popToken());");
+        } else if (clz.equals(Float.class)) {
+            indentln("Float value = Float.valueOf(ctx.popToken());");
+        } else if (clz.equals(double.class)) {
+            indentln("double value = Double.parseDouble(ctx.popToken());");
+        } else if (clz.equals(Double.class)) {
+            indentln("Double value = Double.valueOf(ctx.popToken());");
+        } else if (clz.equals(boolean.class)) {
+            indentln("boolean value = Boolean.parseBoolean(ctx.popToken());");
+        } else if (clz.equals(Boolean.class)) {
+            indentln("Boolean value = Boolean.valueOf(ctx.popToken());");
+        } else if (clz.equals(Object.class)) {
+            indentln("Object value = ctx.popTarget();");
+        } else {
+            indentln(type.getTypeName() + " value = ctx.popTarget();");
+        }
+    }
     public void outputSetter(Setter setter) {
         Class clz = setter.type;
         indentln("ctx.pushState(" + setter.name + "End);");
@@ -121,8 +197,7 @@ public class DeserializerGenerator {
                 || clz.equals(OffsetDateTime.class)
         ) {
             indentln("ctx.pushState(getStartStringValue());");
-        }
-        if (clz.equals(long.class) || clz.equals(Long.class)
+        } else if (clz.equals(long.class) || clz.equals(Long.class)
                 || clz.equals(int.class) || clz.equals(Integer.class)
                 || clz.equals(short.class) || clz.equals(Short.class)
                 || clz.equals(byte.class) || clz.equals(Byte.class)
@@ -203,6 +278,7 @@ public class DeserializerGenerator {
         } else if (Map.class.isAssignableFrom(clz)) {
             throw new RuntimeException("Map not supported yet as a collection or map value type");
         } else {
+            need(clz);
             return fqn(clz, genericType) + ".PARSER.getStart()";
         }
     }
@@ -267,8 +343,16 @@ public class DeserializerGenerator {
         if (setter.type.equals(Object.class)) {
             indentln("ctx.pushState(GenericParser.PARSER.getStart());");
         } else {
+            need(setter.type);
             indentln("ctx.pushState(" + fqn(setter.type, setter.genericType) + ".PARSER.getStart());");
         }
+    }
+
+    private void need(Class clz) {
+        if (clz.getName().startsWith("java")) {
+            throw new RuntimeException("Should not be needed java(x). classes");
+        }
+        needDeserializerFor.add(clz);
     }
 
     private void findSetters(Class clz) {
@@ -283,7 +367,7 @@ public class DeserializerGenerator {
             } else {
                 name = m.getName().substring(3).toLowerCase();
             }
-            setters.add(new Setter(name, paramType, paramGenericType));
+            setters.add(new Setter(name, m, paramType, paramGenericType));
         }
     }
 }

@@ -1,15 +1,20 @@
 package io.quarkus.json.parser.test;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
 import io.quarkus.json.parser.GenericParser;
 import io.quarkus.json.parser.JsonParser;
 import io.quarkus.json.parser.ParserContext;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 
-public class ParserTest {
+public class ExampleParserTest {
 
     /**
      * map nonstring-key, object value, list value
@@ -61,7 +66,7 @@ public class ParserTest {
 
     @Test
     public void testParser() {
-        ParserContext ctx = PersonParser.PARSER.parser();
+        ParserContext ctx = ExamplePersonParser.PARSER.parser();
 
         for (char c : json.toCharArray()) {
             System.out.write(c);
@@ -190,5 +195,63 @@ public class ParserTest {
 
         Assertions.assertTrue(foo == bar);
     }
+
+    public List<Map<String, ?>> m() {
+        return null;
+    }
+
+    @Test
+    public void testTypeName() {
+        for (Method m : this.getClass().getMethods()) {
+            System.out.println(m.getGenericReturnType().getTypeName());
+        }
+    }
+
+    @Test
+    public void testVsJackson() throws Exception {
+        ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true);
+        ObjectReader reader = mapper.readerFor(Person.class);
+        JsonParser parser = ExamplePersonParser.PARSER;
+
+        // warm up
+        int ITERATIONS = 100000;
+        for (int i = 0; i < ITERATIONS; i++) {
+            reader.readValue(json);
+            parser.parser().parse(json);
+        }
+        long start = 0;
+
+        System.gc();
+        Thread.sleep(100);
+
+
+        start = System.currentTimeMillis();
+        for (int i = 0; i < ITERATIONS; i++) {
+            reader.readValue(json);
+        }
+        System.out.println("Jackson took: " + (System.currentTimeMillis() - start) + " (ms)");
+
+        System.gc();
+        Thread.sleep(100);
+
+        start = System.currentTimeMillis();
+        for (int i = 0; i < ITERATIONS; i++) {
+            parser.parser().parse(json);
+        }
+        System.out.println("Generator took: " + (System.currentTimeMillis() - start) + " (ms)");
+
+
+    }
+
+    @Test
+    public void testProfile() throws Exception {
+        for (int i = 0; i < 10000; i++) {
+            ExamplePersonParser.PARSER.parser().parse(json);
+        }
+
+    }
+
+
 
 }
