@@ -85,10 +85,6 @@ public class SkipParser implements JsonParser {
         return startIntegerValue;
     }
 
-
-
-
-
     public void start(ParserContext ctx) {
         value(ctx);
     }
@@ -219,14 +215,14 @@ public class SkipParser implements JsonParser {
         if (c != INT_QUOTE) throw new RuntimeException("Expected '\"' at character " + ctx.charCount());
         ctx.startToken(0);
         ctx.pushState(getKey());
+        if (!ctx.isBufferEmpty()) {
+            key(ctx);
+        }
     }
 
     public void key(ParserContext ctx) {
-        int c = ctx.consume();
+        int c = ctx.skipToQuote();
         if (c == 0) return;
-        if (c != INT_QUOTE) {
-            return;
-        }
         ctx.popState();
         ctx.endToken();
         if (!handleKey(ctx)) {

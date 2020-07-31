@@ -14,8 +14,12 @@ public class ParserContext {
     protected int tokenStart = -1;
     protected int tokenEnd = -1;
 
+    public boolean isBufferEmpty() {
+        return ptr >= buffer.length;
+    }
+
     public int consume() {
-        if (ptr + 1 > buffer.length) return 0;
+        if (ptr >= buffer.length) return 0;
         return (int) buffer[ptr++] & 0xFF;
     }
 
