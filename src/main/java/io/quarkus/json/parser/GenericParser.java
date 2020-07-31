@@ -54,7 +54,7 @@ public class GenericParser extends SkipParser implements JsonParser {
 
     @Override
     public void endNumberValue(ParserContext ctx) {
-        ctx.pushTarget(Integer.valueOf(ctx.popToken()));
+        ctx.pushTarget(ctx.popLongToken());
     }
 
     @Override
@@ -64,6 +64,6 @@ public class GenericParser extends SkipParser implements JsonParser {
 
     @Override
     public void endBooleanValue(ParserContext ctx) {
-        ctx.pushTarget(Boolean.valueOf(ctx.popToken()));
+        ctx.pushTarget(ctx.popBooleanToken());
     }
 }

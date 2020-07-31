@@ -31,7 +31,12 @@ public class IntChar {
     final static int INT_E = 'E';
 
     final static int INT_t = 't';
+    final static int INT_r = 'r';
+    final static int INT_u = 'u';
     final static int INT_f = 'f';
+    final static int INT_a = 'a';
+    final static int INT_l = 'l';
+    final static int INT_s = 's';
 
 
     public static boolean isDigit(int ch) {

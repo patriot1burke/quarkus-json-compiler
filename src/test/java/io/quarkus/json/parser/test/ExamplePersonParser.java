@@ -126,7 +126,7 @@ public class ExamplePersonParser extends ObjectParser {
 
     static ParserState ageEnd = (ctx) -> {
         ctx.popState();
-        int value = ctx.popIntPrimitive();
+        int value = ctx.popIntToken();
         Person person = ctx.target();
         person.setAge(value);
     };
@@ -141,6 +141,6 @@ public class ExamplePersonParser extends ObjectParser {
     static ParserState marriedEnd = (ctx) -> {
         ctx.popState();
         Person person = ctx.target();
-        person.setMarried(Boolean.parseBoolean(ctx.popToken()));
+        person.setMarried(ctx.popBooleanToken());
     };
 }

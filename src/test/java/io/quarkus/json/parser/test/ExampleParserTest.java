@@ -122,25 +122,25 @@ public class ExampleParserTest {
 
         Map person = ctx.parse(generic);
         Assertions.assertEquals("Bill", person.get("name"));
-        Assertions.assertEquals(50, person.get("age"));
+        Assertions.assertEquals(50L, person.get("age"));
         Assertions.assertEquals(true, person.get("married"));
         Assertions.assertEquals(123.23F, person.get("money"));
-        Assertions.assertEquals(1, ((Map)person.get("intMap")).get("one"));
-        Assertions.assertEquals(2, ((Map)person.get("intMap")).get("two"));
+        Assertions.assertEquals(1L, ((Map)person.get("intMap")).get("one"));
+        Assertions.assertEquals(2L, ((Map)person.get("intMap")).get("two"));
         Assertions.assertEquals("John", ((Map)person.get("dad")).get("name"));
         Assertions.assertEquals(true, ((Map)person.get("dad")).get("married"));
         List list = (List)person.get("list");
         Assertions.assertEquals("one", list.get(0));
-        Assertions.assertEquals(2, list.get(1));
+        Assertions.assertEquals(2L, list.get(1));
         Assertions.assertEquals(3.0F, list.get(2));
         Assertions.assertEquals(true, list.get(3));
         Assertions.assertEquals("John", ((Map)list.get(4)).get("name"));
         Assertions.assertEquals(true, ((Map)list.get(4)).get("married"));
         List list2 = (List)person.get("list2");
-        Assertions.assertEquals(0, list2.get(0));
-        Assertions.assertEquals(1, list2.get(1));
-        Assertions.assertEquals(2, list2.get(2));
-        Assertions.assertEquals(3, list2.get(3));
+        Assertions.assertEquals(0L, list2.get(0));
+        Assertions.assertEquals(1L, list2.get(1));
+        Assertions.assertEquals(2L, list2.get(2));
+        Assertions.assertEquals(3L, list2.get(3));
 
     }
 
@@ -163,7 +163,7 @@ public class ExampleParserTest {
 
         List list = ctx.parse(genericList);
         Assertions.assertEquals("one", list.get(0));
-        Assertions.assertEquals(2, list.get(1));
+        Assertions.assertEquals(2L, list.get(1));
         Assertions.assertEquals(3.0F, list.get(2));
         Assertions.assertEquals(true, list.get(3));
         Assertions.assertEquals("John", ((Map)list.get(4)).get("name"));

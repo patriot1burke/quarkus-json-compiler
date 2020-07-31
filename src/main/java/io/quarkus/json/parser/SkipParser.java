@@ -97,6 +97,7 @@ public class SkipParser implements JsonParser {
             beginObject(ctx);
             ctx.pushState(getNextKey());
             ctx.pushState(getKeyStart());
+            keyStart(ctx);
         } else {
             throw new RuntimeException("Illegal value syntax at character " + ctx.charCount());
         }
@@ -273,6 +274,7 @@ public class SkipParser implements JsonParser {
         if (c == INT_PERIOD) {
             ctx.popState();
             ctx.pushState(getFloatValue());
+            floatValue(ctx);
         } else {
             ctx.endToken();
             endNumberValue(ctx);
@@ -308,15 +310,12 @@ public class SkipParser implements JsonParser {
     }
 
     public void floatValue(ParserContext ctx) {
-        int c = ctx.consume();
+        int c = ctx.skipDigits();
         if (c == 0) return;
-        if (isDigit(c)) {
-        } else {
-            ctx.endToken();
-            endFloatValue(ctx);
-            ctx.rollback();
-            ctx.popState();
-        }
+        ctx.endToken();
+        endFloatValue(ctx);
+        ctx.rollback();
+        ctx.popState();
     }
     public void endFloatValue(ParserContext ctx) {
 
@@ -325,10 +324,10 @@ public class SkipParser implements JsonParser {
     public void booleanValue(ParserContext ctx) {
         int c = ctx.skipAlphabetic();
         if (c == 0) return;
+        ctx.popState();
         ctx.endToken();
         endBooleanValue(ctx);
         ctx.rollback();
-        ctx.popState();
     }
 
     public void endBooleanValue(ParserContext ctx) {

@@ -85,7 +85,6 @@ public class ParserContext {
         tokenEnd = -1;
     }
 
-
     public String popToken() {
         if (tokenStart < 0) throw new RuntimeException("Token not started.");
         if (tokenEnd < 0) throw new RuntimeException("Token not ended.");
@@ -95,11 +94,38 @@ public class ParserContext {
         return new String(charbuf);
     }
 
-    public int popIntPrimitive() {
-        return (int)popLongPrimitive();
+    static int[] TRUE_VALUE = {INT_t, INT_r, INT_u, INT_e};
+    static int[] FALSE_VALUE = {INT_f, INT_a, INT_l, INT_s, INT_e};
+
+    public boolean popBooleanToken() {
+        if (tokenStart < 0) throw new RuntimeException("Token not started.");
+        if (tokenEnd < 0) throw new RuntimeException("Token not ended.");
+        int len = tokenEnd - tokenStart;
+        if (len == 4) {
+            for (int i = 0; i < 4; i++) {
+                if (TRUE_VALUE[i] != (int)(buffer[tokenStart + i] & 0xFF)) {
+                    break;
+                }
+            }
+            return true;
+        } else if (len == 5) {
+            for (int i = 0; i < 5; i++) {
+                if (FALSE_VALUE[i] != (int)(buffer[tokenStart + i] & 0xFF)) {
+                    break;
+                }
+            }
+            return false;
+
+        }
+        throw new RuntimeException("Illegal boolean true value syntax");
     }
 
-    public long popLongPrimitive() {
+
+    public int popIntToken() {
+        return (int) popLongToken();
+    }
+
+    public long popLongToken() {
         boolean negative = false;
         int i = 0;
         int len = tokenEnd - tokenStart;
