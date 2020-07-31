@@ -33,6 +33,15 @@ public class ParserContext {
         return 0;
     }
 
+    public int skipToQuote() {
+        while (ptr < buffer.length) {
+            int ch = buffer[ptr++] & 0xFF;
+            if (ch != INT_QUOTE) continue;
+            return ch;
+        }
+        return 0;
+    }
+
     public void startToken(int offset) {
         tokenStart = ptr + offset;
     }
@@ -67,6 +76,10 @@ public class ParserContext {
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
+        return parse(bytes);
+    }
+
+    public <T> T parse(byte[] bytes) {
         read(bytes);
         return target();
     }

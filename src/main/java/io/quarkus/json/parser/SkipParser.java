@@ -128,8 +128,9 @@ public class SkipParser implements JsonParser {
         if (c == 0) return;
         ctx.popState();
         if (c == INT_QUOTE) {
-            ctx.pushState(getStringValue());
             ctx.startToken(0);
+            ctx.pushState(getStringValue());
+            stringValue(ctx);
         } else {
             throw new RuntimeException("Illegal value syntax at character " + ctx.charCount());
         }
@@ -154,6 +155,7 @@ public class SkipParser implements JsonParser {
         if (c == INT_QUOTE) {
             ctx.pushState(getStringValue());
             ctx.startToken(0);
+            stringValue(ctx);
         } else if (isDigit(c) || c == INT_MINUS || c == INT_PLUS) {
             ctx.pushState(getNumberValue());
             ctx.startToken(-1);
@@ -242,14 +244,11 @@ public class SkipParser implements JsonParser {
     }
 
     public void stringValue(ParserContext ctx) {
-        int c = ctx.consume();
+        int c = ctx.skipToQuote();
         if (c == 0) return;
-        if (c != INT_QUOTE) {
-        } else {
-            ctx.endToken();
-            endStringValue(ctx);
-            ctx.popState();
-        }
+        ctx.endToken();
+        endStringValue(ctx);
+        ctx.popState();
     }
 
     public void endStringValue(ParserContext ctx) {

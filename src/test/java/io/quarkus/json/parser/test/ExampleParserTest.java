@@ -202,8 +202,8 @@ public class ExampleParserTest {
         // warm up
         int ITERATIONS = 100000;
         for (int i = 0; i < ITERATIONS; i++) {
-            reader.readValue(json);
-            parser.parser().parse(json);
+            reader.readValue(array);
+            parser.parser().parse(array);
         }
         long start = 0;
 
@@ -213,7 +213,7 @@ public class ExampleParserTest {
 
         start = System.currentTimeMillis();
         for (int i = 0; i < ITERATIONS; i++) {
-            reader.readValue(json);
+            reader.readValue(array);
         }
         System.out.println("Jackson took: " + (System.currentTimeMillis() - start) + " (ms)");
 
@@ -222,7 +222,7 @@ public class ExampleParserTest {
 
         start = System.currentTimeMillis();
         for (int i = 0; i < ITERATIONS; i++) {
-            parser.parser().parse(json);
+            parser.parser().parse(array);
         }
         System.out.println("Generator took: " + (System.currentTimeMillis() - start) + " (ms)");
 
