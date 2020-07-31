@@ -10,9 +10,27 @@ public class ParserContext {
     protected ArrayDeque<Object> target = new ArrayDeque<>();
     protected byte[] buffer;
     protected int ptr;
+    protected ParserState initialState;
+
 
     protected int tokenStart = -1;
     protected int tokenEnd = -1;
+
+    public ParserContext(ParserState initialState) {
+        this.initialState = initialState;
+        state.push(initialState);
+    }
+
+    public void reset() {
+        charCount = 0;
+        state.clear();
+        target.clear();
+        buffer = null;
+        ptr = 0;
+        tokenStart = -1;
+        tokenEnd = -1;
+        state.push(initialState);
+    }
 
     public boolean isBufferEmpty() {
         return ptr >= buffer.length;
@@ -181,11 +199,11 @@ public class ParserContext {
     }
 
     public <T> T parse(String fullJson) {
-        byte[] bytes = new byte[0];
+        byte[] bytes = null;
         try {
             bytes = fullJson.getBytes("UTF-8");
         } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
         return parse(bytes);
     }

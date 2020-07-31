@@ -11,8 +11,7 @@ public class GenericParser extends SkipParser implements JsonParser {
 
     @Override
     public ParserContext parser() {
-        ParserContext ctx = new ParserContext();
-        ctx.pushState(this::value);
+        ParserContext ctx = new ParserContext(this::value);
         return ctx;
     }
 

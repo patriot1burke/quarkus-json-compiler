@@ -69,6 +69,15 @@ public class ExampleParserTest {
         ParserContext ctx = ExamplePersonParser.PARSER.parser();
 
         Person person = ctx.parse(json);
+        validatePerson(person);
+
+        ctx.reset();
+        Person person2 = ctx.parse(json);
+        Assertions.assertFalse(person == person2);
+        validatePerson(person2);
+    }
+
+    public void validatePerson(Person person) {
         Assertions.assertEquals("Bill", person.getName());
         Assertions.assertEquals(50, person.getAge());
         Assertions.assertTrue(person.isMarried());
@@ -231,7 +240,7 @@ public class ExampleParserTest {
 
     @Test
     public void testProfile() throws Exception {
-        for (int i = 0; i < 10000; i++) {
+        for (int i = 0; i < 100000; i++) {
             ExamplePersonParser.PARSER.parser().parse(json);
         }
 

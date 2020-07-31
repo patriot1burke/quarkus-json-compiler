@@ -7,12 +7,9 @@ public class SkipParser implements JsonParser {
 
     @Override
     public ParserContext parser() {
-        ParserContext ctx = new ParserContext();
-        ctx.pushState(getStart());
+        ParserContext ctx = new ParserContext(getStart());
         return ctx;
     }
-
-
 
     // we do these get methods to avoid object creations
     // as method references create a new object every time
