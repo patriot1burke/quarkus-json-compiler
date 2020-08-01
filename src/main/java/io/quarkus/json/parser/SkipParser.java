@@ -17,14 +17,6 @@ public class SkipParser implements JsonParser {
     public ParserState getStart() {
         return start;
     }
-    private ParserState numberValue  = this::numberValue;
-    public ParserState getNumberValue() {
-        return numberValue;
-    }
-    private ParserState value  = this::value;
-    public ParserState getValue() {
-        return value;
-    }
     private ParserState startStringValue  = this::startStringValue;
     public ParserState getStartStringValue() {
         return startStringValue;
@@ -63,30 +55,6 @@ public class SkipParser implements JsonParser {
         if (c== 't' || c == 'f') {
             ctx.startToken(-1);
             booleanValue(ctx);
-        } else {
-            throw new RuntimeException("Illegal value syntax");
-        }
-    }
-
-    public void value(ParserContext ctx) {
-        int c = ctx.skipWhitespace();
-        ctx.popState();
-        if (c == INT_QUOTE) {
-            ctx.startToken(0);
-            stringValue(ctx);
-        } else if (isDigit(c) || c == INT_MINUS || c == INT_PLUS) {
-            ctx.pushState(getNumberValue());
-            ctx.startToken(-1);
-            numberValue(ctx);
-        } else if (c == INT_t || c == INT_f) {
-            ctx.startToken(-1);
-            booleanValue(ctx);
-        } else if (c == INT_LCURLY) {
-            beginObject(ctx);
-            loopKeys(ctx);
-        } else if (c == INT_LBRACKET) {
-            beginList(ctx);
-            loopListValues(ctx);
         } else {
             throw new RuntimeException("Illegal value syntax");
         }

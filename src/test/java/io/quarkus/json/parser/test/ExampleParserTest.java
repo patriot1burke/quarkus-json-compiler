@@ -104,7 +104,10 @@ public class ExampleParserTest {
 
         Person person = ctx.parse(json);
         validatePerson(person);
-   }
+
+        person = LexExamplePersonParser.PARSER.parser().parse(json);
+        validatePerson(person);
+    }
 
     static String simpleProps = "{\n" +
             "  \"junkMap\": {\n" +
@@ -274,12 +277,14 @@ public class ExampleParserTest {
                 .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true);
         ObjectReader reader = mapper.readerFor(Person.class);
         JsonParser parser = ExamplePersonParser.PARSER;
+        JsonParser lexer = LexExamplePersonParser.PARSER;
         byte[] array = json.getBytes("UTF-8");
         // warm up
         int ITERATIONS = 1000000;
         for (int i = 0; i < ITERATIONS; i++) {
             reader.readValue(array);
             parser.parser().parse(array);
+            lexer.parser().parse(array);
         }
         long start = 0;
         System.gc();
@@ -290,6 +295,15 @@ public class ExampleParserTest {
             parser.parser().parse(array);
         }
         System.out.println("Generator took: " + (System.currentTimeMillis() - start) + " (ms)");
+
+        System.gc();
+        Thread.sleep(100);
+
+        start = System.currentTimeMillis();
+        for (int i = 0; i < ITERATIONS; i++) {
+            lexer.parser().parse(array);
+        }
+        System.out.println("lexer took: " + (System.currentTimeMillis() - start) + " (ms)");
 
         System.gc();
         Thread.sleep(100);
@@ -312,5 +326,4 @@ public class ExampleParserTest {
         }
 
     }
-
 }

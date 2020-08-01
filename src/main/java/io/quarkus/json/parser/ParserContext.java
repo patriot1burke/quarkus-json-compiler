@@ -19,16 +19,6 @@ public class ParserContext {
         this.initialState = initialState;
     }
 
-    public void reset() {
-        state.clear();
-        target.clear();
-        buffer = null;
-        ptr = 0;
-        tokenStart = -1;
-        tokenEnd = -1;
-        state.push(initialState);
-    }
-
     public boolean isBufferEmpty() {
         return ptr >= buffer.length;
     }

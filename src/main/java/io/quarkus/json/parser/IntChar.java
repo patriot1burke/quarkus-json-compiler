@@ -1,42 +1,42 @@
 package io.quarkus.json.parser;
 
 public class IntChar {
-    final static int INT_TAB = '\t';
-    final static int INT_LF = '\n';
-    final static int INT_CR = '\r';
-    final static int INT_SPACE = 0x0020;
+    public final static int INT_TAB = '\t';
+    public final static int INT_LF = '\n';
+    public final static int INT_CR = '\r';
+    public final static int INT_SPACE = 0x0020;
 
     // Markup
-    final static int INT_LBRACKET = '[';
-    final static int INT_RBRACKET = ']';
-    final static int INT_LCURLY = '{';
-    final static int INT_RCURLY = '}';
-    final static int INT_QUOTE = '"';
-    final static int INT_APOS = '\'';
-    final static int INT_BACKSLASH = '\\';
-    final static int INT_SLASH = '/';
-    final static int INT_ASTERISK = '*';
-    final static int INT_COLON = ':';
-    final static int INT_COMMA = ',';
-    final static int INT_HASH = '#';
+    public final static int INT_LBRACKET = '[';
+    public final static int INT_RBRACKET = ']';
+    public final static int INT_LCURLY = '{';
+    public final static int INT_RCURLY = '}';
+    public final static int INT_QUOTE = '"';
+    public final static int INT_APOS = '\'';
+    public final static int INT_BACKSLASH = '\\';
+    public final static int INT_SLASH = '/';
+    public final static int INT_ASTERISK = '*';
+    public final static int INT_COLON = ':';
+    public final static int INT_COMMA = ',';
+    public final static int INT_HASH = '#';
 
     // Number chars
-    final static int INT_0 = '0';
-    final static int INT_9 = '9';
-    final static int INT_MINUS = '-';
-    final static int INT_PLUS = '+';
+    public final static int INT_0 = '0';
+    public final static int INT_9 = '9';
+    public final static int INT_MINUS = '-';
+    public final static int INT_PLUS = '+';
 
-    final static int INT_PERIOD = '.';
-    final static int INT_e = 'e';
-    final static int INT_E = 'E';
+    public final static int INT_PERIOD = '.';
+    public final static int INT_e = 'e';
+    public final static int INT_E = 'E';
 
-    final static int INT_t = 't';
-    final static int INT_r = 'r';
-    final static int INT_u = 'u';
-    final static int INT_f = 'f';
-    final static int INT_a = 'a';
-    final static int INT_l = 'l';
-    final static int INT_s = 's';
+    public final static int INT_t = 't';
+    public final static int INT_r = 'r';
+    public final static int INT_u = 'u';
+    public final static int INT_f = 'f';
+    public final static int INT_a = 'a';
+    public final static int INT_l = 'l';
+    public final static int INT_s = 's';
 
 
     public static boolean isDigit(int ch) {

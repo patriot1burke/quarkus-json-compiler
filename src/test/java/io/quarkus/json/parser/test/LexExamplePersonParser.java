@@ -2,6 +2,7 @@ package io.quarkus.json.parser.test;
 
 import io.quarkus.json.parser.CollectionParser;
 import io.quarkus.json.parser.ContextValue;
+import io.quarkus.json.parser.IntChar;
 import io.quarkus.json.parser.MapParser;
 import io.quarkus.json.parser.ObjectParser;
 import io.quarkus.json.parser.ParserContext;
@@ -33,46 +34,65 @@ public class LexExamplePersonParser extends ObjectParser {
         ctx.pushTarget(new Person());
     }
 
-    @Override
-    public void key(ParserContext ctx) {
-        ctx.startToken(0);
-        ctx.skipToQuote();
-        ctx.endToken();
-        if (ctx.tokenEquals(ageSymbol)) {
+    protected boolean check(String str, ParserContext ctx) {
+        for (int i = 0; i < str.length(); i++) {
+            int c = ctx.consume();
+            if (c == IntChar.INT_QUOTE) return false;
+            if (c != str.charAt(i)) return false;
+        }
+        if (ctx.consume() != IntChar.INT_QUOTE) {
+            ctx.skipToQuote();
+            return false;
+        }
+        return true;
+    }
+
+    protected boolean handleKey(ParserContext ctx) {
+        int c = ctx.consume();
+        char ch = (char)c;
+
+        if (c == 'a') {
+            if (!check("ge", ctx)) return false;
             ctx.clearToken();
             valueSeparator(ctx);
             startIntegerValue(ctx);
             int value = ctx.popIntToken();
             Person person = ctx.target();
             person.setAge(value);
-        } else if (ctx.tokenEquals(marriedSymbol)) {
-            ctx.clearToken();
-            valueSeparator(ctx);
-            startBooleanValue(ctx);
-            boolean value = ctx.popBooleanToken();
-            Person person = ctx.target();
-            person.setMarried(value);
-        } else if (ctx.tokenEquals(moneySymbol)) {
-            ctx.clearToken();
-            valueSeparator(ctx);
-            startNumberValue(ctx);
-            float value = Float.parseFloat(ctx.popToken());
-            Person person = ctx.target();
-            person.setMoney(value);
-        } else if (ctx.tokenEquals(nameSymbol)) {
+            return true;
+        } else if (c == 'm') {
+            c = ctx.consume();
+            if (c == 'a') {
+                if (!check("rried", ctx)) return false;
+                ctx.clearToken();
+                valueSeparator(ctx);
+                startBooleanValue(ctx);
+                boolean value = ctx.popBooleanToken();
+                Person person = ctx.target();
+                person.setMarried(value);
+                return true;
+            } else if (c == 'o') {
+                if (!check("ney", ctx)) return false;
+                ctx.clearToken();
+                valueSeparator(ctx);
+                startNumberValue(ctx);
+                float value = Float.parseFloat(ctx.popToken());
+                Person person = ctx.target();
+                person.setMoney(value);
+                return true;
+            } else if (c != IntChar.INT_QUOTE) {
+                ctx.skipToQuote();
+            }
+        } else if (c == 'n') {
+            if (!check("ame", ctx)) return false;
             ctx.clearToken();
             valueSeparator(ctx);
             startStringValue(ctx);
             Person person = ctx.target();
             person.setName(ctx.popToken());
-        } else if (ctx.tokenEquals(dadSymbol)) {
-            ctx.clearToken();
-            valueSeparator(ctx);
-            LexExamplePersonParser.PARSER.getStart().parse(ctx);
-            Person dad = ctx.popTarget();
-            Person person = ctx.target();
-            person.setDad(dad);
-        } else if (ctx.tokenEquals(intMapSymbol)) {
+            return true;
+        } else if (c == 'i') {
+            if (!check("ntMap", ctx)) return false;
             ctx.clearToken();
             ctx.pushTarget(new HashMap());
             valueSeparator(ctx);
@@ -80,7 +100,9 @@ public class LexExamplePersonParser extends ObjectParser {
             Map<String, Integer> intMap = ctx.popTarget();
             Person person = ctx.target();
             person.setIntMap(intMap);
-        } else if (ctx.tokenEquals(kidsSymbol)) {
+            return true;
+        } else if (c == 'k') {
+            if (!check("ids", ctx)) return false;
             ctx.clearToken();
             ctx.pushTarget(new HashMap());
             valueSeparator(ctx);
@@ -88,7 +110,18 @@ public class LexExamplePersonParser extends ObjectParser {
             Map<String, Person> kids = ctx.popTarget();
             Person person = ctx.target();
             person.setKids(kids);
-        } else if (ctx.tokenEquals(petsSymbol)) {
+            return true;
+        } else if (c == 'd') {
+            if (!check("ad", ctx)) return false;
+            ctx.clearToken();
+            valueSeparator(ctx);
+            ExamplePersonParser.PARSER.getStart().parse(ctx);
+            Person dad = ctx.popTarget();
+            Person person = ctx.target();
+            person.setDad(dad);
+            return true;
+        } else if (c == 'p') {
+            if (!check("ets", ctx)) return false;
             ctx.clearToken();
             ctx.pushTarget(new LinkedList());
             valueSeparator(ctx);
@@ -96,7 +129,9 @@ public class LexExamplePersonParser extends ObjectParser {
             List<String> pets = ctx.popTarget();
             Person person = ctx.target();
             person.setPets(pets);
-        } else if (ctx.tokenEquals(siblingsSymbol)) {
+           return true;
+        } else if (c == 's') {
+            if (!check("iblings", ctx)) return false;
             ctx.clearToken();
             ctx.pushTarget(new LinkedList<>());
             valueSeparator(ctx);
@@ -104,24 +139,18 @@ public class LexExamplePersonParser extends ObjectParser {
             List<Person> siblings = ctx.popTarget();
             Person person = ctx.target();
             person.setSiblings(siblings);
-        } else {
-            String key = ctx.popToken();
-            valueSeparator(ctx);
-            try {
-                SkipParser.PARSER.unpushedValue(ctx);
-            } catch (RuntimeException e) {
-                throw new RuntimeException("Failed on skipped key " + key, e);
-            }
+            return true;
+        } else if (c != IntChar.INT_QUOTE) {
+            ctx.skipToQuote();
         }
+        return false;
     }
 
-    static Symbol ageSymbol = new Symbol("age");
-    static Symbol dadSymbol = new Symbol("dad");
-    static Symbol intMapSymbol = new Symbol("intMap");
-    static Symbol kidsSymbol = new Symbol("kids");
-    static Symbol marriedSymbol = new Symbol("married");
-    static Symbol moneySymbol = new Symbol("money");
-    static Symbol nameSymbol = new Symbol("name");
-    static Symbol petsSymbol = new Symbol("pets");
-    static Symbol siblingsSymbol = new Symbol("siblings");
+    @Override
+    public void key(ParserContext ctx) {
+        if (!handleKey(ctx)) {
+            valueSeparator(ctx);
+            SkipParser.PARSER.unpushedValue(ctx);
+        }
+    }
 }
