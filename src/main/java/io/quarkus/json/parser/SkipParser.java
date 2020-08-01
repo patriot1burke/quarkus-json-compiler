@@ -259,6 +259,7 @@ public class SkipParser implements JsonParser {
             } else {
                 if (c != INT_COMMA) throw new RuntimeException("Expecting comma separator");
                 c = ctx.skipWhitespace();
+                if (c != INT_QUOTE) throw new RuntimeException("Expecting key quote");
                 key(ctx);
             }
         }

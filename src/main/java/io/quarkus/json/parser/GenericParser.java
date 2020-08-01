@@ -22,7 +22,6 @@ public class GenericParser extends SkipParser implements JsonParser {
 
     @Override
     public void addListValue(ParserContext ctx) {
-        ctx.popState();
         Object val = ctx.popTarget();
         List list = ctx.target();
         list.add(val);
@@ -30,17 +29,15 @@ public class GenericParser extends SkipParser implements JsonParser {
 
     @Override
     public void key(ParserContext ctx) {
+        ctx.startToken(0);
         int c = ctx.skipToQuote();
         ctx.endToken();
         String key = ctx.popToken();
-        ctx.pushState((ctx1) -> {
-            ctx1.popState();
-            Object val = ctx1.popTarget();
-            Map map = ctx1.target();
-            map.put(key, val);
-        });
         valueSeparator(ctx);
         unpushedValue(ctx);
+        Object val = ctx.popTarget();
+        Map map = ctx.target();
+        map.put(key, val);
     }
 
     @Override
