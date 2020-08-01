@@ -5,7 +5,6 @@ import java.util.ArrayDeque;
 import static io.quarkus.json.parser.IntChar.*;
 
 public class ParserContext {
-    protected int charCount = 0;
     protected ArrayDeque<ParserState> state = new ArrayDeque<>();
     protected ArrayDeque<Object> target = new ArrayDeque<>();
     protected byte[] buffer;
@@ -22,7 +21,6 @@ public class ParserContext {
     }
 
     public void reset() {
-        charCount = 0;
         state.clear();
         target.clear();
         buffer = null;
@@ -36,8 +34,13 @@ public class ParserContext {
         return ptr >= buffer.length;
     }
 
+    RuntimeException endOfBuffer() {
+        return new RuntimeException("End of buffer not expected");
+
+    }
+
     public int consume() {
-        if (ptr >= buffer.length) return 0;
+        if (ptr >= buffer.length) throw endOfBuffer();
         return (int) buffer[ptr++] & 0xFF;
     }
 
@@ -52,7 +55,7 @@ public class ParserContext {
             if (isWhitespace(ch)) continue;
             return ch;
         }
-        return 0;
+        throw endOfBuffer();
     }
 
     public int skipToQuote() {
@@ -61,7 +64,7 @@ public class ParserContext {
             if (ch != INT_QUOTE) continue;
             return ch;
         }
-        return 0;
+        throw endOfBuffer();
     }
     public int skipDigits() {
         while (ptr < buffer.length) {
@@ -69,7 +72,7 @@ public class ParserContext {
             if (isDigit(ch)) continue;
             return ch;
         }
-        return 0;
+        throw endOfBuffer();
     }
 
     public int skipAlphabetic() {
@@ -78,7 +81,7 @@ public class ParserContext {
             if (Character.isAlphabetic(ch)) continue;
             return ch;
         }
-        return 0;
+        throw endOfBuffer();
     }
 
     public boolean tokenEquals(Symbol symbol) {
@@ -88,10 +91,6 @@ public class ParserContext {
             if (symbol.utf8[i] != buffer[tokenStart + i]) return false;
         }
         return true;
-    }
-
-    public ByteArrayKey tokenKey() {
-        return new ByteArrayKey(buffer, tokenStart, tokenEnd - tokenStart);
     }
 
     public void startToken(int offset) {
@@ -160,11 +159,11 @@ public class ParserContext {
                     negative = true;
                     limit = -9223372036854775808L;
                 } else if (firstChar != INT_PLUS) {
-                    throw new RuntimeException("Illegal number format at character " + charCount);
+                    throw new RuntimeException("Illegal number format");
                 }
 
                 if (len == 1) {
-                    throw new RuntimeException("Illegal number format at character " + charCount);
+                    throw new RuntimeException("Illegal number format");
                 }
 
                 ++i;
@@ -177,12 +176,12 @@ public class ParserContext {
             for(result = 0L; i < len; result -= (long)digit) {
                 digit = (buffer[i++ + tokenStart] & 0xFF) - INT_0;
                 if (digit < 0 || result < multmin) {
-                    throw new RuntimeException("Illegal number format at character " + charCount);
+                    throw new RuntimeException("Illegal number format");
                 }
 
                 result *= (long)10;
                 if (result < limit + (long)digit) {
-                    throw new RuntimeException("Illegal number format at character " + charCount);
+                    throw new RuntimeException("Illegal number format");
                 }
             }
 
@@ -192,7 +191,6 @@ public class ParserContext {
     }
 
     public void read(byte[] buffer) {
-        charCount++;
         this.buffer = buffer;
         this.ptr = 0;
 
@@ -215,10 +213,6 @@ public class ParserContext {
     public <T> T parse(byte[] bytes) {
         read(bytes);
         return target();
-    }
-
-    public int charCount() {
-        return charCount;
     }
 
     public void pushState(ParserState state) {

@@ -17,7 +17,7 @@ public interface ContextValue {
     ContextValue OBJECT_VALUE = (ctx) -> ctx.popTarget();
     ContextValue CHAR_VALUE = (ctx) -> {
         String val = ctx.popToken();
-        if (val.length() != 1) throw new RuntimeException("Expecting single character for value at character " + ctx.charCount());
+        if (val.length() != 1) throw new RuntimeException("Expecting single character for string value");
         return val.charAt(0);
     };
 }

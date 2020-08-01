@@ -113,9 +113,6 @@ public class ExampleParserTest {
         ctx.reset();
         person = ctx.parse(no_junk);
         validatePerson(person);
-
-        person = ByteArrayHashmapExamplePersonParser.PARSER.parser().parse(json);
-        validatePerson(person);
     }
 
     public void validatePerson(Person person) {
@@ -289,7 +286,6 @@ public class ExampleParserTest {
                 .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true);
         ObjectReader reader = mapper.readerFor(Person.class);
         JsonParser parser = ExamplePersonParser.PARSER;
-        JsonParser hashParser = ByteArrayHashmapExamplePersonParser.PARSER;
         byte[] array = json.getBytes("UTF-8");
         // warm up
         int ITERATIONS = 1000000;

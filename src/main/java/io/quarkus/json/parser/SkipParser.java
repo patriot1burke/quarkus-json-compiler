@@ -86,32 +86,15 @@ public class SkipParser implements JsonParser {
         value(ctx);
     }
 
-    public void startObject(ParserContext ctx) {
-        int c = ctx.skipWhitespace();
-        if (c == 0) return;
-        ctx.popState();
-        if (c == INT_LCURLY) {
-            beginObject(ctx);
-            ctx.pushState(getNextKey());
-            ctx.pushState(getKeyStart());
-            keyStart(ctx);
-        } else {
-            throw new RuntimeException("Illegal value syntax at character " + ctx.charCount());
-        }
-
-    }
-
-
     public void startList(ParserContext ctx) {
         int c = ctx.skipWhitespace();
-        if (c == 0) return;
         ctx.popState();
         if (c == INT_LBRACKET) {
             beginObject(ctx);
             ctx.pushState(getNextValue());
             listValue(ctx);
         } else {
-            throw new RuntimeException("Illegal value syntax at character " + ctx.charCount());
+            throw new RuntimeException("Expecting start of array");
         }
 
     }
@@ -119,36 +102,30 @@ public class SkipParser implements JsonParser {
 
     public void startStringValue(ParserContext ctx) {
         int c = ctx.skipWhitespace();
-        if (c == 0) return;
         ctx.popState();
         if (c == INT_QUOTE) {
             ctx.startToken(0);
-            ctx.pushState(getStringValue());
             stringValue(ctx);
         } else {
-            throw new RuntimeException("Illegal value syntax at character " + ctx.charCount());
+            throw new RuntimeException("Illegal value syntax");
         }
     }
 
     public void startBooleanValue(ParserContext ctx) {
         int c = ctx.skipWhitespace();
-        if (c == 0) return;
         ctx.popState();
         if (c== 't' || c == 'f') {
-            ctx.pushState(getBooleanValue());
             ctx.startToken(-1);
             booleanValue(ctx);
         } else {
-            throw new RuntimeException("Illegal value syntax at character " + ctx.charCount());
+            throw new RuntimeException("Illegal value syntax");
         }
     }
 
     public void value(ParserContext ctx) {
         int c = ctx.skipWhitespace();
-        if (c == 0) return;
         ctx.popState();
         if (c == INT_QUOTE) {
-            ctx.pushState(getStringValue());
             ctx.startToken(0);
             stringValue(ctx);
         } else if (isDigit(c) || c == INT_MINUS || c == INT_PLUS) {
@@ -156,7 +133,6 @@ public class SkipParser implements JsonParser {
             ctx.startToken(-1);
             numberValue(ctx);
         } else if (c == INT_t || c == INT_f) {
-            ctx.pushState(getBooleanValue());
             ctx.startToken(-1);
             booleanValue(ctx);
         } else if (c == INT_LCURLY) {
@@ -168,7 +144,7 @@ public class SkipParser implements JsonParser {
             ctx.pushState(getNextValue());
             listValue(ctx);
         } else {
-            throw new RuntimeException("Illegal value syntax at character " + ctx.charCount());
+            throw new RuntimeException("Illegal value syntax");
         }
     }
 
@@ -194,39 +170,13 @@ public class SkipParser implements JsonParser {
             ctx.popState();
             return;
         } else {
-            throw new RuntimeException("Illegal character at character " + ctx.charCount());
+            throw new RuntimeException("Expecting array next value or end");
         }
     }
 
     public void beginObject(ParserContext ctx) {
     }
 
-    public void keyStart(ParserContext ctx) {
-        int c = ctx.skipWhitespace();
-        if (c == 0) return;
-        ctx.popState();
-
-        if (c == INT_RCURLY) {
-            ctx.rollback();
-            return;
-        }
-        if (c != INT_QUOTE) throw new RuntimeException("Expected '\"' at character " + ctx.charCount());
-        ctx.startToken(0);
-        ctx.pushState(getKey());
-        key(ctx);
-    }
-
-    public void key(ParserContext ctx) {
-        int c = ctx.skipToQuote();
-        if (c == 0) return;
-        ctx.popState();
-        ctx.endToken();
-        if (!handleKey(ctx)) {
-            ctx.pushState(getValue());
-        }
-        ctx.pushState(getValueSeparator());
-        valueSeparator(ctx);
-    }
 
     public boolean handleKey(ParserContext ctx) {
         return false;
@@ -234,17 +184,14 @@ public class SkipParser implements JsonParser {
 
     public void valueSeparator(ParserContext ctx) {
         int c = ctx.skipWhitespace();
-        if (c == 0) return;
-        if (c != INT_COLON) throw new RuntimeException("Expecting ':' at character " + ctx.charCount());
+        if (c != INT_COLON) throw new RuntimeException("Expecting ':' key value separator");
         ctx.popState();
     }
 
     public void stringValue(ParserContext ctx) {
-        int c = ctx.skipToQuote();
-        if (c == 0) return;
+        ctx.skipToQuote();
         ctx.endToken();
         endStringValue(ctx);
-        ctx.popState();
     }
 
     public void endStringValue(ParserContext ctx) {
@@ -254,20 +201,18 @@ public class SkipParser implements JsonParser {
 
     public void startNumberValue(ParserContext ctx) {
         int c = ctx.skipWhitespace();
-        if (c == 0) return;
         ctx.popState();
         if (isDigit(c) || c == INT_MINUS || c == INT_PLUS) {
             ctx.pushState(getNumberValue());
             ctx.startToken(-1);
             numberValue(ctx);
         } else {
-            throw new RuntimeException("Illegal value syntax at character " + ctx.charCount());
+            throw new RuntimeException("Illegal number value");
         }
     }
 
     public void numberValue(ParserContext ctx) {
         int c = ctx.skipDigits();
-        if (c == 0) return;
         if (c == INT_PERIOD) {
             ctx.popState();
             ctx.pushState(getFloatValue());
@@ -282,24 +227,20 @@ public class SkipParser implements JsonParser {
 
     public void startIntegerValue(ParserContext ctx) {
         int c = ctx.skipWhitespace();
-        if (c == 0) return;
         ctx.popState();
         if (isDigit(c) || c == INT_MINUS || c == INT_PLUS) {
-            ctx.pushState(getIntegerValue());
             ctx.startToken(-1);
             integerValue(ctx);
         } else {
-            throw new RuntimeException("Illegal value syntax at character " + ctx.charCount());
+            throw new RuntimeException("Illegal integer value");
         }
     }
 
     public void integerValue(ParserContext ctx) {
-        int c = ctx.skipDigits();
-        if (c == 0) return;
+        ctx.skipDigits();
         ctx.endToken();
         endNumberValue(ctx);
         ctx.rollback();
-        ctx.popState();
     }
 
     public void endNumberValue(ParserContext ctx) {
@@ -308,7 +249,6 @@ public class SkipParser implements JsonParser {
 
     public void floatValue(ParserContext ctx) {
         int c = ctx.skipDigits();
-        if (c == 0) return;
         ctx.endToken();
         endFloatValue(ctx);
         ctx.rollback();
@@ -319,9 +259,7 @@ public class SkipParser implements JsonParser {
     }
 
     public void booleanValue(ParserContext ctx) {
-        int c = ctx.skipAlphabetic();
-        if (c == 0) return;
-        ctx.popState();
+        ctx.skipAlphabetic();
         ctx.endToken();
         endBooleanValue(ctx);
         ctx.rollback();
@@ -331,9 +269,46 @@ public class SkipParser implements JsonParser {
 
     }
 
+    public void startObject(ParserContext ctx) {
+        int c = ctx.skipWhitespace();
+        ctx.popState();
+        if (c == INT_LCURLY) {
+            beginObject(ctx);
+            beginKeys(ctx);
+        } else {
+            throw new RuntimeException("Illegal value syntax");
+        }
+
+    }
+
+    public void beginKeys(ParserContext ctx) {
+        int c = ctx.skipWhitespace();
+
+        if (c == INT_RCURLY) {
+            ctx.rollback();
+            return;
+        }
+        if (c != INT_QUOTE) throw new RuntimeException("Expecting key quote");
+        ctx.pushState(getNextKey());
+        ctx.startToken(0);
+        key(ctx);
+    }
+
+    public void keyStart(ParserContext ctx) {
+        int c = ctx.skipWhitespace();
+        ctx.popState();
+
+        if (c == INT_RCURLY) {
+            ctx.rollback();
+            return;
+        }
+        if (c != INT_QUOTE) throw new RuntimeException("Expecting key quote");
+        ctx.startToken(0);
+        key(ctx);
+    }
+
     public void nextKey(ParserContext ctx) {
         int c = ctx.skipWhitespace();
-        if (c == 0) return;
         if (c == INT_COMMA) {
             ctx.pushState(getKeyStart());
             keyStart(ctx);
@@ -341,7 +316,18 @@ public class SkipParser implements JsonParser {
             ctx.popState();
             return;
         } else {
-            throw new RuntimeException("Illegal character at character " + ctx.charCount());
+            throw new RuntimeException("Illegal key value");
         }
     }
+
+    public void key(ParserContext ctx) {
+        int c = ctx.skipToQuote();
+        ctx.endToken();
+        if (!handleKey(ctx)) {
+            ctx.pushState(getValue());
+        }
+        ctx.pushState(getValueSeparator());
+        valueSeparator(ctx);
+    }
+
 }
