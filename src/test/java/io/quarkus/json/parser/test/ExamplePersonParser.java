@@ -34,6 +34,17 @@ public class ExamplePersonParser extends ObjectParser {
     }
 
     @Override
+    public void key(ParserContext ctx) {
+        int c = ctx.skipToQuote();
+        ctx.endToken();
+        if (!handleKey(ctx)) {
+            ctx.pushState(getValue());
+        }
+        valueSeparator(ctx);
+    }
+
+
+    @Override
     public boolean handleKey(ParserContext ctx) {
         if (ctx.tokenEquals(ageSymbol)) {
             ctx.pushState(ageEnd);

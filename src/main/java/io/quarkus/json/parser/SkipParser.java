@@ -185,7 +185,6 @@ public class SkipParser implements JsonParser {
     public void valueSeparator(ParserContext ctx) {
         int c = ctx.skipWhitespace();
         if (c != INT_COLON) throw new RuntimeException("Expecting ':' key value separator");
-        ctx.popState();
     }
 
     public void stringValue(ParserContext ctx) {
@@ -326,7 +325,6 @@ public class SkipParser implements JsonParser {
         if (!handleKey(ctx)) {
             ctx.pushState(getValue());
         }
-        ctx.pushState(getValueSeparator());
         valueSeparator(ctx);
     }
 
