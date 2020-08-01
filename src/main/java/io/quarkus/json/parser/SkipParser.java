@@ -225,8 +225,12 @@ public class SkipParser implements JsonParser {
     }
 
     public void startIntegerValue(ParserContext ctx) {
-        int c = ctx.skipWhitespace();
         ctx.popState();
+        beginIntegerValue(ctx);
+    }
+
+    public void beginIntegerValue(ParserContext ctx) {
+        int c = ctx.skipWhitespace();
         if (isDigit(c) || c == INT_MINUS || c == INT_PLUS) {
             ctx.startToken(-1);
             integerValue(ctx);

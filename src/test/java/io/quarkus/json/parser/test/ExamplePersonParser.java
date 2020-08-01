@@ -35,53 +35,64 @@ public class ExamplePersonParser extends ObjectParser {
 
     @Override
     public void key(ParserContext ctx) {
-        int c = ctx.skipToQuote();
+        ctx.skipToQuote();
         ctx.endToken();
-        if (!handleKey(ctx)) {
-            ctx.pushState(getValue());
-        }
-        valueSeparator(ctx);
-    }
-
-
-    @Override
-    public boolean handleKey(ParserContext ctx) {
         if (ctx.tokenEquals(ageSymbol)) {
-            ctx.pushState(ageEnd);
-            ctx.pushState(getStartNumberValue());
+            ctx.clearToken();
+            valueSeparator(ctx);
+            beginIntegerValue(ctx);
+            int value = ctx.popIntToken();
+            Person person = ctx.target();
+            person.setAge(value);
         } else if (ctx.tokenEquals(dadSymbol)) {
+            ctx.clearToken();
             ctx.pushState(dadEnd);
             ctx.pushState(ExamplePersonParser.PARSER.getStart());
+            valueSeparator(ctx);
         } else if (ctx.tokenEquals(intMapSymbol)) {
+            ctx.clearToken();
             ctx.pushTarget(new HashMap());
             ctx.pushState(intMapEnd);
             ctx.pushState(intMapStart);
+            valueSeparator(ctx);
         } else if (ctx.tokenEquals(kidsSymbol)) {
+            ctx.clearToken();
             ctx.pushTarget(new HashMap());
             ctx.pushState(kidsEnd);
             ctx.pushState(kidsStart);
+            valueSeparator(ctx);
         } else if (ctx.tokenEquals(marriedSymbol)) {
+            ctx.clearToken();
             ctx.pushState(marriedEnd);
             ctx.pushState(getStartBooleanValue());
+            valueSeparator(ctx);
         } else if (ctx.tokenEquals(moneySymbol)) {
+            ctx.clearToken();
             ctx.pushState(moneyEnd);
             ctx.pushState(getStartNumberValue());
+            valueSeparator(ctx);
         } else if (ctx.tokenEquals(nameSymbol)) {
+            ctx.clearToken();
             ctx.pushState(nameEnd);
             ctx.pushState(getStartStringValue());
+            valueSeparator(ctx);
         } else if (ctx.tokenEquals(petsSymbol)) {
+            ctx.clearToken();
             ctx.pushTarget(new LinkedList());
             ctx.pushState(petsEnd);
             ctx.pushState(petsStart);
+            valueSeparator(ctx);
         } else if (ctx.tokenEquals(siblingsSymbol)) {
+            ctx.clearToken();
             ctx.pushTarget(new LinkedList<>());
             ctx.pushState(siblingsEnd);
             ctx.pushState(siblingsStart);
+            valueSeparator(ctx);
         } else {
+            ctx.clearToken();
             ctx.pushState(SkipParser.PARSER.getValue());
+            valueSeparator(ctx);
         }
-        ctx.clearToken();
-        return true;
     }
 
     static Symbol ageSymbol = new Symbol("age");
