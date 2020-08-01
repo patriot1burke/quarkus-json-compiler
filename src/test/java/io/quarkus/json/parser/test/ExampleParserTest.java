@@ -10,7 +10,6 @@ import io.quarkus.json.parser.ParserContext;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 
@@ -216,27 +215,6 @@ public class ExampleParserTest {
         Assertions.assertEquals("John", ((Map)list.get(4)).get("name"));
         Assertions.assertEquals(true, ((Map)list.get(4)).get("married"));
 
-    }
-
-    private Runnable functionPtr = this::testGenericList;
-
-    @Test
-    public void testPtrEquivalence() {
-        Runnable foo = functionPtr;
-        Runnable bar = functionPtr;
-
-        Assertions.assertTrue(foo == bar);
-    }
-
-    public List<Map<String, ?>> m() {
-        return null;
-    }
-
-    @Test
-    public void testTypeName() {
-        for (Method m : this.getClass().getMethods()) {
-            System.out.println(m.getGenericReturnType().getTypeName());
-        }
     }
 
     static String no_float = "{\n" +

@@ -148,6 +148,33 @@ public class SkipParser implements JsonParser {
         }
     }
 
+    public void unpushedValue(ParserContext ctx) {
+        int c = ctx.skipWhitespace();
+        if (c == INT_QUOTE) {
+            ctx.startToken(0);
+            stringValue(ctx);
+        } else if (isDigit(c) || c == INT_MINUS || c == INT_PLUS) {
+            ctx.pushState(getNumberValue());
+            ctx.startToken(-1);
+            numberValue(ctx);
+        } else if (c == INT_t || c == INT_f) {
+            ctx.startToken(-1);
+            booleanValue(ctx);
+        } else if (c == INT_LCURLY) {
+            beginObject(ctx);
+            ctx.pushState(getNextKey());
+            ctx.pushState(getKeyStart());
+        } else if (c == INT_LBRACKET) {
+            beginList(ctx);
+            ctx.pushState(getNextValue());
+            listValue(ctx);
+        } else {
+            throw new RuntimeException("Illegal value syntax");
+        }
+    }
+
+
+
     public void beginList(ParserContext ctx) {
 
     }
