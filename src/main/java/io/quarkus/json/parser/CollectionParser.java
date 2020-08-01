@@ -13,10 +13,6 @@ public class CollectionParser extends ObjectParser {
         this.valueFunction = valueFunction;
         this.valueState = valueState;
     }
-    public CollectionParser(ContextValue valueFunction) {
-        this.valueFunction = valueFunction;
-        this.valueState = this::value;
-    }
 
     @Override
     public void start(ParserContext ctx) {
@@ -24,7 +20,6 @@ public class CollectionParser extends ObjectParser {
     }
 
     public void addListValue(ParserContext ctx) {
-        ctx.popState();
         Object value = valueFunction.value(ctx);
         Collection collection = ctx.target();
         collection.add(value);
@@ -32,8 +27,7 @@ public class CollectionParser extends ObjectParser {
 
     @Override
     public void listValue(ParserContext ctx) {
-        ctx.pushState(addListValue);
-        ctx.pushState(valueState);
+        valueState.parse(ctx);
     }
 
 }

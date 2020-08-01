@@ -35,63 +35,83 @@ public class ExamplePersonParser extends ObjectParser {
 
     @Override
     public void key(ParserContext ctx) {
+        ctx.startToken(0);
         ctx.skipToQuote();
         ctx.endToken();
         if (ctx.tokenEquals(ageSymbol)) {
             ctx.clearToken();
             valueSeparator(ctx);
-            beginIntegerValue(ctx);
+            startIntegerValue(ctx);
             int value = ctx.popIntToken();
             Person person = ctx.target();
             person.setAge(value);
+        } else if (ctx.tokenEquals(marriedSymbol)) {
+            ctx.clearToken();
+            valueSeparator(ctx);
+            startBooleanValue(ctx);
+            boolean value = ctx.popBooleanToken();
+            Person person = ctx.target();
+            person.setMarried(value);
+        } else if (ctx.tokenEquals(moneySymbol)) {
+            ctx.clearToken();
+            valueSeparator(ctx);
+            startNumberValue(ctx);
+            float value = Float.parseFloat(ctx.popToken());
+            Person person = ctx.target();
+            person.setMoney(value);
+        } else if (ctx.tokenEquals(nameSymbol)) {
+            ctx.clearToken();
+            valueSeparator(ctx);
+            startStringValue(ctx);
+            Person person = ctx.target();
+            person.setName(ctx.popToken());
         } else if (ctx.tokenEquals(dadSymbol)) {
             ctx.clearToken();
-            ctx.pushState(dadEnd);
-            ctx.pushState(ExamplePersonParser.PARSER.getStart());
             valueSeparator(ctx);
+            ExamplePersonParser.PARSER.getStart().parse(ctx);
+            Person dad = ctx.popTarget();
+            Person person = ctx.target();
+            person.setDad(dad);
         } else if (ctx.tokenEquals(intMapSymbol)) {
             ctx.clearToken();
             ctx.pushTarget(new HashMap());
-            ctx.pushState(intMapEnd);
-            ctx.pushState(intMapStart);
             valueSeparator(ctx);
+            intMapStart.parse(ctx);
+            Map<String, Integer> intMap = ctx.popTarget();
+            Person person = ctx.target();
+            person.setIntMap(intMap);
         } else if (ctx.tokenEquals(kidsSymbol)) {
             ctx.clearToken();
             ctx.pushTarget(new HashMap());
-            ctx.pushState(kidsEnd);
-            ctx.pushState(kidsStart);
             valueSeparator(ctx);
-        } else if (ctx.tokenEquals(marriedSymbol)) {
-            ctx.clearToken();
-            ctx.pushState(marriedEnd);
-            ctx.pushState(getStartBooleanValue());
-            valueSeparator(ctx);
-        } else if (ctx.tokenEquals(moneySymbol)) {
-            ctx.clearToken();
-            ctx.pushState(moneyEnd);
-            ctx.pushState(getStartNumberValue());
-            valueSeparator(ctx);
-        } else if (ctx.tokenEquals(nameSymbol)) {
-            ctx.clearToken();
-            ctx.pushState(nameEnd);
-            ctx.pushState(getStartStringValue());
-            valueSeparator(ctx);
+            kidsStart.parse(ctx);
+            Map<String, Person> kids = ctx.popTarget();
+            Person person = ctx.target();
+            person.setKids(kids);
         } else if (ctx.tokenEquals(petsSymbol)) {
             ctx.clearToken();
             ctx.pushTarget(new LinkedList());
-            ctx.pushState(petsEnd);
-            ctx.pushState(petsStart);
             valueSeparator(ctx);
+            petsStart.parse(ctx);
+            List<String> pets = ctx.popTarget();
+            Person person = ctx.target();
+            person.setPets(pets);
         } else if (ctx.tokenEquals(siblingsSymbol)) {
             ctx.clearToken();
             ctx.pushTarget(new LinkedList<>());
-            ctx.pushState(siblingsEnd);
-            ctx.pushState(siblingsStart);
             valueSeparator(ctx);
+            siblingsStart.parse(ctx);
+            List<Person> siblings = ctx.popTarget();
+            Person person = ctx.target();
+            person.setSiblings(siblings);
         } else {
-            ctx.clearToken();
-            ctx.pushState(SkipParser.PARSER.getValue());
+            String key = ctx.popToken();
             valueSeparator(ctx);
+            try {
+                SkipParser.PARSER.unpushedValue(ctx);
+            } catch (RuntimeException e) {
+                throw new RuntimeException("Failed on skipped key " + key, e);
+            }
         }
     }
 

@@ -104,15 +104,25 @@ public class ExampleParserTest {
 
         Person person = ctx.parse(json);
         validatePerson(person);
+   }
 
-        ctx.reset();
-        Person person2 = ctx.parse(json);
-        Assertions.assertFalse(person == person2);
-        validatePerson(person2);
-        ctx.reset();
-        person = ctx.parse(no_junk);
-        validatePerson(person);
+    static String simpleProps = "{\n" +
+            "  \"junkMap\": {\n" +
+            "    \"foo\": \"bar\",\n" +
+            "    \"one\": 1,\n" +
+            "    \"list\": [1, 2, 3, 4]\n" +
+            "  },\n" +
+            "  \"married\": true\n" +
+            "}";
+
+    @Test
+    public void testSimpleProps() {
+        ParserContext ctx = ExamplePersonParser.PARSER.parser();
+
+        Person person = ctx.parse(simpleProps);
+
     }
+
 
     public void validatePerson(Person person) {
         Assertions.assertEquals("Bill", person.getName());

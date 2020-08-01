@@ -17,7 +17,6 @@ public class ParserContext {
 
     public ParserContext(ParserState initialState) {
         this.initialState = initialState;
-        state.push(initialState);
     }
 
     public void reset() {
@@ -194,6 +193,8 @@ public class ParserContext {
         this.buffer = buffer;
         this.ptr = 0;
 
+        initialState.parse(this);
+
         while (ptr < this.buffer.length) {
             if (state.isEmpty()) return;
             state.peek().parse(this);
@@ -216,6 +217,7 @@ public class ParserContext {
     }
 
     public void pushState(ParserState state) {
+        if (true) throw new RuntimeException("STATE PUSHED!");
         this.state.push(state);
     }
 

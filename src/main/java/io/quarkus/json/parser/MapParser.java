@@ -15,20 +15,20 @@ public class MapParser extends ObjectParser {
     public MapParser(ContextValue keyFunction, ContextValue valueFunction) {
         this.keyFunction = keyFunction;
         this.valueFunction = valueFunction;
-        this.valueState = this::value;
+        this.valueState = this::unpushedValue;
     }
 
     @Override
-    public boolean handleKey(ParserContext ctx) {
+    public void key(ParserContext ctx) {
+        ctx.startToken(0);
+        ctx.skipToQuote();
+        ctx.endToken();
         Object key = keyFunction.value(ctx);
-        ctx.pushState((ctx1) -> {
-            ctx1.popState();
-            Object value = valueFunction.value(ctx1);
-            Map map = ctx1.target();
-            map.put(key, value);
-        });
-        ctx.pushState(valueState);
-        return true;
-    }
+        valueSeparator(ctx);
+        valueState.parse(ctx);
+        Object value = valueFunction.value(ctx);
+        Map map = ctx.target();
+        map.put(key, value);
 
+    }
 }
