@@ -90,6 +90,10 @@ public class ParserContext {
         return true;
     }
 
+    public ByteArrayKey tokenKey() {
+        return new ByteArrayKey(buffer, tokenStart, tokenEnd - tokenStart);
+    }
+
     public void startToken(int offset) {
         tokenStart = ptr + offset;
     }

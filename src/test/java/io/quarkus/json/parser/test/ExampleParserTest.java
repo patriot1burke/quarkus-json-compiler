@@ -64,6 +64,41 @@ public class ExampleParserTest {
             "  }\n" +
             "}";
 
+
+    static String no_junk = "{\n" +
+            "  \"intMap\": {\n" +
+            "    \"one\": 1,\n" +
+            "    \"two\": 2\n" +
+            "  },\n" +
+            "  \"name\": \"Bill\",\n" +
+            "  \"age\": 50,\n" +
+            "  \"money\": 123.23,\n" +
+            "  \"married\": true,\n" +
+            "  \"pets\": [ \"itchy\", \"scratchy\"],\n" +
+            "  \"kids\": {\n" +
+            "    \"Sammy\": {\n" +
+            "      \"name\": \"Sammy\",\n" +
+            "      \"age\": 6\n" +
+            "    },\n" +
+            "    \"Suzi\": {\n" +
+            "      \"name\": \"Suzi\",\n" +
+            "      \"age\": 7\n" +
+            "    }\n" +
+            "  },\n" +
+            "  \"siblings\": [\n" +
+            "    {\n" +
+            "      \"name\": \"Ritchie\"\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"Joani\"\n" +
+            "    }\n" +
+            "  ],\n" +
+            "  \"dad\": {\n" +
+            "    \"name\": \"John\",\n" +
+            "    \"married\": true\n" +
+            "  }\n" +
+            "}";
+
     @Test
     public void testParser() {
         ParserContext ctx = ExamplePersonParser.PARSER.parser();
@@ -75,6 +110,12 @@ public class ExampleParserTest {
         Person person2 = ctx.parse(json);
         Assertions.assertFalse(person == person2);
         validatePerson(person2);
+        ctx.reset();
+        person = ctx.parse(no_junk);
+        validatePerson(person);
+
+        person = ByteArrayHashmapExamplePersonParser.PARSER.parser().parse(json);
+        validatePerson(person);
     }
 
     public void validatePerson(Person person) {
@@ -201,20 +242,70 @@ public class ExampleParserTest {
         }
     }
 
+    static String no_float = "{\n" +
+            "  \"intMap\": {\n" +
+            "    \"one\": 1,\n" +
+            "    \"two\": 2\n" +
+            "  },\n" +
+            "  \"name\": \"Bill\",\n" +
+            "  \"age\": 50,\n" +
+            "  \"married\": true,\n" +
+            "  \"junkInt\": 666,\n" +
+            "  \"pets\": [ \"itchy\", \"scratchy\"],\n" +
+            "  \"kids\": {\n" +
+            "    \"Sammy\": {\n" +
+            "      \"name\": \"Sammy\",\n" +
+            "      \"age\": 6\n" +
+            "    },\n" +
+            "    \"Suzi\": {\n" +
+            "      \"name\": \"Suzi\",\n" +
+            "      \"age\": 7\n" +
+            "    }\n" +
+            "  },\n" +
+            "  \"siblings\": [\n" +
+            "    {\n" +
+            "      \"name\": \"Ritchie\"\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"Joani\"\n" +
+            "    }\n" +
+            "  ],\n" +
+            "  \"junkList\": [\"1\", \"2\"]," +
+            "  \"junkBool\": true,\n" +
+            "  \"junkMap\": {\n" +
+            "    \"foo\": \"bar\",\n" +
+            "    \"one\": 1,\n" +
+            "    \"list\": [1, 2, 3, 4]\n" +
+            "  },\n" +
+            "  \"dad\": {\n" +
+            "    \"name\": \"John\",\n" +
+            "    \"married\": true\n" +
+            "  }\n" +
+            "}";
+
     @Test
     public void testVsJackson() throws Exception {
         ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
                 .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true);
         ObjectReader reader = mapper.readerFor(Person.class);
         JsonParser parser = ExamplePersonParser.PARSER;
+        JsonParser hashParser = ByteArrayHashmapExamplePersonParser.PARSER;
         byte[] array = json.getBytes("UTF-8");
         // warm up
-        int ITERATIONS = 100000;
+        int ITERATIONS = 1000000;
         for (int i = 0; i < ITERATIONS; i++) {
             reader.readValue(array);
             parser.parser().parse(array);
         }
         long start = 0;
+        System.gc();
+        Thread.sleep(100);
+
+        start = System.currentTimeMillis();
+        for (int i = 0; i < ITERATIONS; i++) {
+            parser.parser().parse(array);
+        }
+        System.out.println("Generator took: " + (System.currentTimeMillis() - start) + " (ms)");
 
         System.gc();
         Thread.sleep(100);
@@ -226,14 +317,6 @@ public class ExampleParserTest {
         }
         System.out.println("Jackson took: " + (System.currentTimeMillis() - start) + " (ms)");
 
-        System.gc();
-        Thread.sleep(100);
-
-        start = System.currentTimeMillis();
-        for (int i = 0; i < ITERATIONS; i++) {
-            parser.parser().parse(array);
-        }
-        System.out.println("Generator took: " + (System.currentTimeMillis() - start) + " (ms)");
 
 
     }
