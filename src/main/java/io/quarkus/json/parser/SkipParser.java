@@ -93,7 +93,7 @@ public class SkipParser implements JsonParser {
 
             if (first) {
                 first = false;
-                ctx.rollback();
+                ctx.rewind();
                 listValue(ctx);
                 addListValue(ctx);
             } else {
@@ -151,7 +151,7 @@ public class SkipParser implements JsonParser {
         ctx.skipDigits();
         ctx.endToken();
         endNumberValue(ctx);
-        ctx.rollback();
+        ctx.rewind();
     }
 
     public void endNumberValue(ParserContext ctx) {
@@ -175,7 +175,7 @@ public class SkipParser implements JsonParser {
         } else {
             ctx.endToken();
             endNumberValue(ctx);
-            ctx.rollback();
+            ctx.rewind();
         }
     }
 
@@ -183,7 +183,7 @@ public class SkipParser implements JsonParser {
         int c = ctx.skipDigits();
         ctx.endToken();
         endFloatValue(ctx);
-        ctx.rollback();
+        ctx.rewind();
     }
     public void endFloatValue(ParserContext ctx) {
 
@@ -193,7 +193,7 @@ public class SkipParser implements JsonParser {
         ctx.skipAlphabetic();
         ctx.endToken();
         endBooleanValue(ctx);
-        ctx.rollback();
+        ctx.rewind();
     }
 
     public void endBooleanValue(ParserContext ctx) {

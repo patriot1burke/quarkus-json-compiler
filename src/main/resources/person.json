@@ -1,4 +1,16 @@
 {
+  "name": 1,
+  "age" : 2,
+  "money": 3,
+  "married": 4,
+  "q": 5,
+  "qq": 6,
+  "qqq": 7
+}
+
+
+
+{
   "intMap": {
     "one": 1,
     "two": 2

@@ -5,7 +5,6 @@ import java.util.ArrayDeque;
 import static io.quarkus.json.parser.IntChar.*;
 
 public class ParserContext {
-    protected ArrayDeque<ParserState> state = new ArrayDeque<>();
     protected ArrayDeque<Object> target = new ArrayDeque<>();
     protected byte[] buffer;
     protected int ptr;
@@ -33,7 +32,7 @@ public class ParserContext {
         return (int) buffer[ptr++] & 0xFF;
     }
 
-    public void rollback() {
+    public void rewind() {
         ptr--;
         if (ptr < 0) throw new RuntimeException("Busted buffer bounds");
     }
@@ -95,6 +94,28 @@ public class ParserContext {
         tokenEnd = -1;
     }
 
+    /**
+     * Check if remaining key is equal to parameter string.
+     *
+     * This is only used in generated code to match keys.
+     * We rewind the END QUOTE character if the check fails.
+     *
+     * @param str
+     * @return
+     */
+    public boolean check(String str) {
+        for (int i = 0; i < str.length(); i++) {
+            int c = consume();
+            if (c == IntChar.INT_QUOTE) {
+                rewind();
+                return false;
+            }
+            if (c != str.charAt(i)) return false;
+        }
+        return consume() == INT_QUOTE;
+    }
+
+
     public String popToken() {
         if (tokenStart < 0) throw new RuntimeException("Token not started.");
         if (tokenEnd < 0) throw new RuntimeException("Token not ended.");
@@ -132,6 +153,14 @@ public class ParserContext {
 
     public int popIntToken() {
         return (int) popLongToken();
+    }
+
+    public float popFloatToken() {
+        return Float.parseFloat(popToken());
+    }
+
+    public double popDoubleToken() {
+        return Double.parseDouble(popToken());
     }
 
     public long popLongToken() {
@@ -184,11 +213,6 @@ public class ParserContext {
         this.ptr = 0;
 
         initialState.parse(this);
-
-        while (ptr < this.buffer.length) {
-            if (state.isEmpty()) return;
-            state.peek().parse(this);
-        }
     }
 
     public <T> T parse(String fullJson) {
@@ -204,15 +228,6 @@ public class ParserContext {
     public <T> T parse(byte[] bytes) {
         read(bytes);
         return target();
-    }
-
-    public void pushState(ParserState state) {
-        if (true) throw new RuntimeException("STATE PUSHED!");
-        this.state.push(state);
-    }
-
-    public void popState() {
-        this.state.pop();
     }
 
     public <T> T target() {

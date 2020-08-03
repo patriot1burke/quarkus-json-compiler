@@ -34,123 +34,100 @@ public class LexExamplePersonParser extends ObjectParser {
         ctx.pushTarget(new Person());
     }
 
-    protected boolean check(String str, ParserContext ctx) {
-        for (int i = 0; i < str.length(); i++) {
-            int c = ctx.consume();
-            if (c == IntChar.INT_QUOTE) return false;
-            if (c != str.charAt(i)) return false;
-        }
-        if (ctx.consume() != IntChar.INT_QUOTE) {
-            ctx.skipToQuote();
-            return false;
-        }
-        return true;
-    }
-
-    protected boolean handleKey(ParserContext ctx) {
+    @Override
+    public void key(ParserContext ctx) {
         int c = ctx.consume();
-        char ch = (char)c;
 
         if (c == 'a') {
-            if (!check("ge", ctx)) return false;
-            ctx.clearToken();
-            valueSeparator(ctx);
-            startIntegerValue(ctx);
-            int value = ctx.popIntToken();
-            Person person = ctx.target();
-            person.setAge(value);
-            return true;
+            if (ctx.check("ge")) {
+                valueSeparator(ctx);
+                startIntegerValue(ctx);
+                int value = ctx.popIntToken();
+                Person person = ctx.target();
+                person.setAge(value);
+                return;
+            }
         } else if (c == 'm') {
             c = ctx.consume();
             if (c == 'a') {
-                if (!check("rried", ctx)) return false;
-                ctx.clearToken();
-                valueSeparator(ctx);
-                startBooleanValue(ctx);
-                boolean value = ctx.popBooleanToken();
-                Person person = ctx.target();
-                person.setMarried(value);
-                return true;
+                if (ctx.check("rried")) {
+                    valueSeparator(ctx);
+                    startBooleanValue(ctx);
+                    boolean value = ctx.popBooleanToken();
+                    Person person = ctx.target();
+                    person.setMarried(value);
+                    return;
+                }
             } else if (c == 'o') {
-                if (!check("ney", ctx)) return false;
-                ctx.clearToken();
-                valueSeparator(ctx);
-                startNumberValue(ctx);
-                float value = Float.parseFloat(ctx.popToken());
-                Person person = ctx.target();
-                person.setMoney(value);
-                return true;
-            } else if (c != IntChar.INT_QUOTE) {
-                ctx.skipToQuote();
+                if (ctx.check("ney")) {
+                    valueSeparator(ctx);
+                    startNumberValue(ctx);
+                    float value = Float.parseFloat(ctx.popToken());
+                    Person person = ctx.target();
+                    person.setMoney(value);
+                    return;
+                }
             }
         } else if (c == 'n') {
-            if (!check("ame", ctx)) return false;
-            ctx.clearToken();
-            valueSeparator(ctx);
-            startStringValue(ctx);
-            Person person = ctx.target();
-            person.setName(ctx.popToken());
-            return true;
+            if (ctx.check("ame")) {
+                valueSeparator(ctx);
+                startStringValue(ctx);
+                Person person = ctx.target();
+                person.setName(ctx.popToken());
+                return;
+            }
         } else if (c == 'i') {
-            if (!check("ntMap", ctx)) return false;
-            ctx.clearToken();
-            ctx.pushTarget(new HashMap());
-            valueSeparator(ctx);
-            intMapStart.parse(ctx);
-            Map<String, Integer> intMap = ctx.popTarget();
-            Person person = ctx.target();
-            person.setIntMap(intMap);
-            return true;
+            if (ctx.check("ntMap")) {
+                ctx.pushTarget(new HashMap());
+                valueSeparator(ctx);
+                intMapStart.parse(ctx);
+                Map<String, Integer> intMap = ctx.popTarget();
+                Person person = ctx.target();
+                person.setIntMap(intMap);
+                return;
+            }
         } else if (c == 'k') {
-            if (!check("ids", ctx)) return false;
-            ctx.clearToken();
-            ctx.pushTarget(new HashMap());
-            valueSeparator(ctx);
-            kidsStart.parse(ctx);
-            Map<String, Person> kids = ctx.popTarget();
-            Person person = ctx.target();
-            person.setKids(kids);
-            return true;
+            if (ctx.check("ids")) {
+                ctx.pushTarget(new HashMap());
+                valueSeparator(ctx);
+                kidsStart.parse(ctx);
+                Map<String, Person> kids = ctx.popTarget();
+                Person person = ctx.target();
+                person.setKids(kids);
+                return;
+            }
         } else if (c == 'd') {
-            if (!check("ad", ctx)) return false;
-            ctx.clearToken();
-            valueSeparator(ctx);
-            ExamplePersonParser.PARSER.getStart().parse(ctx);
-            Person dad = ctx.popTarget();
-            Person person = ctx.target();
-            person.setDad(dad);
-            return true;
+            if (ctx.check("ad")) {
+                valueSeparator(ctx);
+                ExamplePersonParser.PARSER.getStart().parse(ctx);
+                Person dad = ctx.popTarget();
+                Person person = ctx.target();
+                person.setDad(dad);
+                return;
+            }
         } else if (c == 'p') {
-            if (!check("ets", ctx)) return false;
-            ctx.clearToken();
-            ctx.pushTarget(new LinkedList());
-            valueSeparator(ctx);
-            petsStart.parse(ctx);
-            List<String> pets = ctx.popTarget();
-            Person person = ctx.target();
-            person.setPets(pets);
-           return true;
+            if (ctx.check("ets")) {
+                ctx.pushTarget(new LinkedList());
+                valueSeparator(ctx);
+                petsStart.parse(ctx);
+                List<String> pets = ctx.popTarget();
+                Person person = ctx.target();
+                person.setPets(pets);
+                return;
+            }
         } else if (c == 's') {
-            if (!check("iblings", ctx)) return false;
-            ctx.clearToken();
-            ctx.pushTarget(new LinkedList<>());
-            valueSeparator(ctx);
-            siblingsStart.parse(ctx);
-            List<Person> siblings = ctx.popTarget();
-            Person person = ctx.target();
-            person.setSiblings(siblings);
-            return true;
-        } else if (c != IntChar.INT_QUOTE) {
-            ctx.skipToQuote();
+            if (ctx.check("iblings")) {
+                ctx.pushTarget(new LinkedList<>());
+                valueSeparator(ctx);
+                siblingsStart.parse(ctx);
+                List<Person> siblings = ctx.popTarget();
+                Person person = ctx.target();
+                person.setSiblings(siblings);
+                return;
+            }
         }
-        return false;
-    }
-
-    @Override
-    public void key(ParserContext ctx) {
-        if (!handleKey(ctx)) {
-            valueSeparator(ctx);
-            SkipParser.PARSER.unpushedValue(ctx);
-        }
+        ctx.skipToQuote();
+        valueSeparator(ctx);
+        SkipParser.PARSER.unpushedValue(ctx);
     }
 }
