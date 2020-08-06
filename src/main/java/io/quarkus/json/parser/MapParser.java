@@ -12,11 +12,6 @@ public class MapParser extends ObjectParser {
         this.valueFunction = valueFunction;
         this.valueState = valueState;
     }
-    public MapParser(ContextValue keyFunction, ContextValue valueFunction) {
-        this.keyFunction = keyFunction;
-        this.valueFunction = valueFunction;
-        this.valueState = this::unpushedValue;
-    }
 
     @Override
     public void key(ParserContext ctx) {
