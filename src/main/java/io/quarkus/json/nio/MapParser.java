@@ -15,7 +15,6 @@ public class MapParser extends ObjectParser {
 
     @Override
     public boolean key(ParserContext ctx) {
-        ctx.startToken(0);
         int c = ctx.skipToQuote();
         if (c == 0) {
             ctx.pushState(getContinueKey());

@@ -100,7 +100,9 @@ public class NioExampleParserTest {
 
     @Test
     public void testParser() {
-        Person person = NioExamplePersonParser.PARSER.parser().parse(json);
+        ParserContext ctx = NioExamplePersonParser.PARSER.parser();
+        Assertions.assertTrue(ctx.parse(json));
+        Person person = ctx.target();
         validatePerson(person);
     }
 
@@ -155,8 +157,8 @@ public class NioExampleParserTest {
     public void testGenericParser() {
         JsonParser p = GenericParser.PARSER;
         ParserContext ctx = p.parser();
-
-        Map person = ctx.parse(generic);
+        Assertions.assertTrue(ctx.parse(generic));
+        Map person = ctx.target();
         Assertions.assertEquals("Bill", person.get("name"));
         Assertions.assertEquals(50L, person.get("age"));
         Assertions.assertEquals(true, person.get("married"));
@@ -196,8 +198,9 @@ public class NioExampleParserTest {
     public void testGenericList() {
         JsonParser p = GenericParser.PARSER;
         ParserContext ctx = p.parser();
+        Assertions.assertTrue(ctx.parse(genericList));
 
-        List list = ctx.parse(genericList);
+        List list = ctx.target();
         Assertions.assertEquals("one", list.get(0));
         Assertions.assertEquals(2L, list.get(1));
         Assertions.assertEquals(3.0F, list.get(2));

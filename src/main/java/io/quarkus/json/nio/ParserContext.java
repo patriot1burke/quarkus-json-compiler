@@ -1,15 +1,15 @@
 package io.quarkus.json.nio;
 
-import io.quarkus.json.parser.Symbol;
-
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayDeque;
+import java.util.LinkedList;
 
 import static io.quarkus.json.parser.IntChar.*;
 
 public class ParserContext {
-    protected ArrayDeque<ParserState> state = new ArrayDeque<>();
+    protected LinkedList<ParserState> state;
     protected ArrayDeque<Object> target = new ArrayDeque<>();
+    protected BufferBuilder baos;
     protected byte[] buffer;
     protected int ptr;
     protected ParserState initialState;
@@ -23,32 +23,37 @@ public class ParserContext {
     }
 
     public void pushState(ParserState ps) {
+        if (state == null) state = new LinkedList<>();
         state.push(ps);
     }
 
     public void pushState(ParserState ps, int at) {
-        throw new RuntimeException("Not implemented yet");
+        if (state == null) state = new LinkedList<>();
+        state.add(at, ps);
     }
 
     public void popState() {
+        if (state == null) return;
         state.pop();
     }
 
     public int stateIndex() {
-        return -1; // not implemented yet
+        return state == null ? 0 : state.size();
     }
 
     public boolean isBufferEmpty() {
         return ptr >= buffer.length;
     }
 
-    RuntimeException endOfBuffer() {
-        return new RuntimeException("End of buffer not expected");
-
-    }
-
     public int consume() {
-        if (ptr >= buffer.length) throw endOfBuffer();
+        // this assumes that returning 0 will abort the parse.
+        if (ptr >= buffer.length) {
+            if (tokenStart > -1) {
+                if (baos == null) baos = new BufferBuilder(1024);
+                baos.write(buffer, tokenStart, ptr - tokenStart);
+            }
+            return 0;
+        }
         return (int) buffer[ptr++] & 0xFF;
     }
 
@@ -59,37 +64,37 @@ public class ParserContext {
 
     public int skipWhitespace() {
         while (ptr < buffer.length) {
-            int ch = buffer[ptr++] & 0xFF;
+            int ch = consume();
             if (isWhitespace(ch)) continue;
             return ch;
         }
-        throw endOfBuffer();
+        return 0;
     }
 
     public int skipToQuote() {
         while (ptr < buffer.length) {
-            int ch = buffer[ptr++] & 0xFF;
+            int ch = consume();
             if (ch != INT_QUOTE) continue;
             return ch;
         }
-        throw endOfBuffer();
+        return 0;
     }
     public int skipDigits() {
         while (ptr < buffer.length) {
-            int ch = buffer[ptr++] & 0xFF;
+            int ch = consume();
             if (isDigit(ch)) continue;
             return ch;
         }
-        throw endOfBuffer();
+        return 0;
     }
 
     public int skipAlphabetic() {
         while (ptr < buffer.length) {
-            int ch = buffer[ptr++] & 0xFF;
+            int ch = consume();
             if (Character.isAlphabetic(ch)) continue;
             return ch;
         }
-        throw endOfBuffer();
+        return 0;
     }
 
     public void startToken(int offset) {
@@ -101,9 +106,40 @@ public class ParserContext {
     }
 
     public void clearToken() {
+        baos = null;
         tokenStart = -1;
         tokenEnd = -1;
     }
+
+    public int tokenCharAt(int index) {
+        if (baos == null) {
+            return buffer[tokenStart + index] & 0xFF;
+        } else {
+            return baos.getBuffer()[index] & 0xFF;
+        }
+    }
+
+    public boolean compareToken(int index, String str) {
+        if (baos == null) {
+            int size = tokenEnd - tokenStart - index;
+            if (size != str.length()) return false;
+            for (int i = 0; i < size; i++) {
+                int c = buffer[tokenStart + i + index] & 0xFF;
+                if (c != str.charAt(i)) return false;
+            }
+            return true;
+        } else {
+            int size = baos.size() - index;
+            if (size != str.length()) return false;
+            byte[] buf = baos.getBuffer();
+            for (int i = 0; i < size; i++) {
+                int c = buf[i + index] & 0xFF;
+                if (c != str.charAt(i)) return false;
+            }
+            return true;
+        }
+    }
+
 
     /**
      * Check if remaining key is equal to parameter string.
@@ -128,38 +164,29 @@ public class ParserContext {
 
 
     public String popToken() {
-        if (tokenStart < 0) throw new RuntimeException("Token not started.");
-        if (tokenEnd < 0) throw new RuntimeException("Token not ended.");
-        char[] charbuf = new char[tokenEnd - tokenStart];
-        for (int i = 0; i < tokenEnd - tokenStart; i++) charbuf[i] = (char)(buffer[tokenStart + i] & 0xFF);
+        String val;
+        if (baos == null) {
+            if (tokenStart < 0) throw new RuntimeException("Token not started.");
+            if (tokenEnd < 0) throw new RuntimeException("Token not ended.");
+            val = ParsePrimitives.readString(buffer, tokenStart, tokenEnd);
+        } else {
+            val = ParsePrimitives.readString(baos.getBuffer(), 0, baos.size());
+        }
         clearToken();
-        return new String(charbuf);
+        return val;
     }
 
-    static int[] TRUE_VALUE = {INT_t, INT_r, INT_u, INT_e};
-    static int[] FALSE_VALUE = {INT_f, INT_a, INT_l, INT_s, INT_e};
-
     public boolean popBooleanToken() {
-        if (tokenStart < 0) throw new RuntimeException("Token not started.");
-        if (tokenEnd < 0) throw new RuntimeException("Token not ended.");
-        int len = tokenEnd - tokenStart;
-        if (len == 4) {
-            for (int i = 0; i < 4; i++) {
-                if (TRUE_VALUE[i] != (int)(buffer[tokenStart + i] & 0xFF)) {
-                    break;
-                }
-            }
-            return true;
-        } else if (len == 5) {
-            for (int i = 0; i < 5; i++) {
-                if (FALSE_VALUE[i] != (int)(buffer[tokenStart + i] & 0xFF)) {
-                    break;
-                }
-            }
-            return false;
-
+        boolean val;
+        if (baos == null) {
+            if (tokenStart < 0) throw new RuntimeException("Token not started.");
+            if (tokenEnd < 0) throw new RuntimeException("Token not ended.");
+            val = ParsePrimitives.readBoolean(buffer, tokenStart, tokenEnd);
+        } else {
+            val = ParsePrimitives.readBoolean(baos.getBuffer(), 0, baos.size());
         }
-        throw new RuntimeException("Illegal boolean true value syntax");
+        clearToken();
+        return val;
     }
 
     public int popIntToken() {
@@ -171,62 +198,41 @@ public class ParserContext {
     }
 
     public double popDoubleToken() {
+        if (tokenStart < 0) throw new RuntimeException("Token not started.");
+        if (tokenEnd < 0) throw new RuntimeException("Token not ended.");
         return Double.parseDouble(popToken());
     }
 
     public long popLongToken() {
-        boolean negative = false;
-        int i = 0;
-        int len = tokenEnd - tokenStart;
-        long limit = -9223372036854775807L;
-        if (len <= 0) {
-            return 0;
+        long val;
+        if (baos == null) {
+            if (tokenStart < 0) throw new RuntimeException("Token not started.");
+            if (tokenEnd < 0) throw new RuntimeException("Token not ended.");
+            val = ParsePrimitives.readLong(buffer, tokenStart, tokenEnd);
         } else {
-            int firstChar = buffer[tokenStart] & 0xFF;
-            if (firstChar < INT_0) {
-                if (firstChar == INT_MINUS) {
-                    negative = true;
-                    limit = -9223372036854775808L;
-                } else if (firstChar != INT_PLUS) {
-                    throw new RuntimeException("Illegal number format");
-                }
-
-                if (len == 1) {
-                    throw new RuntimeException("Illegal number format");
-                }
-
-                ++i;
-            }
-
-            long multmin = limit / (long)10;
-
-            long result;
-            int digit;
-            for(result = 0L; i < len; result -= (long)digit) {
-                digit = (buffer[i++ + tokenStart] & 0xFF) - INT_0;
-                if (digit < 0 || result < multmin) {
-                    throw new RuntimeException("Illegal number format");
-                }
-
-                result *= (long)10;
-                if (result < limit + (long)digit) {
-                    throw new RuntimeException("Illegal number format");
-                }
-            }
-
-            clearToken();
-            return negative ? result : -result;
+            val = ParsePrimitives.readLong(baos.getBuffer(), 0, baos.size());
         }
+        clearToken();
+        return val;
     }
 
-    public void read(byte[] buffer) {
+    public boolean parse(byte[] buffer) {
         this.buffer = buffer;
         this.ptr = 0;
 
-        initialState.parse(this);
+        if (state == null || state.isEmpty()) {
+            return initialState.parse(this);
+        }
+
+        while (ptr < buffer.length && (state != null & !state.isEmpty())) {
+            if (!state.pop().parse(this)) {
+                return false;
+            }
+        }
+        return state != null && state.isEmpty();
     }
 
-    public <T> T parse(String fullJson) {
+    public boolean parse(String fullJson) {
         byte[] bytes = null;
         try {
             bytes = fullJson.getBytes("UTF-8");
@@ -234,11 +240,6 @@ public class ParserContext {
             throw new RuntimeException(e);
         }
         return parse(bytes);
-    }
-
-    public <T> T parse(byte[] bytes) {
-        read(bytes);
-        return target();
     }
 
     public <T> T target() {

@@ -34,10 +34,17 @@ public class NioExamplePersonParser extends ObjectParser {
 
     @Override
     public boolean key(ParserContext ctx) {
-        int c = ctx.consume();
-
+        int c = ctx.skipToQuote();
+        if (c == 0) {
+            ctx.pushState(getContinueKey());
+            return false;
+        }
+        ctx.endToken();
+        int index = 0;
+        c = ctx.tokenCharAt(index++);
+        char ch = (char)c;
         if (c == 'a') {
-            if (ctx.check("ge")) {
+            if (ctx.compareToken(index, "ge")) {
                 valueSeparator(ctx);
                 startIntegerValue(ctx);
                 int value = ctx.popIntToken();
@@ -46,9 +53,9 @@ public class NioExamplePersonParser extends ObjectParser {
                 return true;
             }
         } else if (c == 'm') {
-            c = ctx.consume();
+            c = ctx.tokenCharAt(index++);
             if (c == 'a') {
-                if (ctx.check("rried")) {
+                if (ctx.compareToken(index, "rried")) {
                     valueSeparator(ctx);
                     startBooleanValue(ctx);
                     boolean value = ctx.popBooleanToken();
@@ -57,7 +64,7 @@ public class NioExamplePersonParser extends ObjectParser {
                     return true;
                 }
             } else if (c == 'o') {
-                if (ctx.check("ney")) {
+                if (ctx.compareToken(index,"ney")) {
                     valueSeparator(ctx);
                     startNumberValue(ctx);
                     float value = Float.parseFloat(ctx.popToken());
@@ -67,7 +74,7 @@ public class NioExamplePersonParser extends ObjectParser {
                 }
             }
         } else if (c == 'n') {
-            if (ctx.check("ame")) {
+            if (ctx.compareToken(index,"ame")) {
                 valueSeparator(ctx);
                 startStringValue(ctx);
                 Person person = ctx.target();
@@ -75,7 +82,7 @@ public class NioExamplePersonParser extends ObjectParser {
                 return true;
             }
         } else if (c == 'i') {
-            if (ctx.check("ntMap")) {
+            if (ctx.compareToken(index,"ntMap")) {
                 ctx.pushTarget(new HashMap());
                 valueSeparator(ctx);
                 intMapStart.parse(ctx);
@@ -85,7 +92,7 @@ public class NioExamplePersonParser extends ObjectParser {
                 return true;
             }
         } else if (c == 'k') {
-            if (ctx.check("ids")) {
+            if (ctx.compareToken(index,"ids")) {
                 ctx.pushTarget(new HashMap());
                 valueSeparator(ctx);
                 kidsStart.parse(ctx);
@@ -95,7 +102,7 @@ public class NioExamplePersonParser extends ObjectParser {
                 return true;
             }
         } else if (c == 'd') {
-            if (ctx.check("ad")) {
+            if (ctx.compareToken(index,"ad")) {
                 valueSeparator(ctx);
                 NioExamplePersonParser.PARSER.getStart().parse(ctx);
                 Person dad = ctx.popTarget();
@@ -104,7 +111,7 @@ public class NioExamplePersonParser extends ObjectParser {
                 return true;
             }
         } else if (c == 'p') {
-            if (ctx.check("ets")) {
+            if (ctx.compareToken(index,"ets")) {
                 ctx.pushTarget(new LinkedList());
                 valueSeparator(ctx);
                 petsStart.parse(ctx);
@@ -114,7 +121,7 @@ public class NioExamplePersonParser extends ObjectParser {
                 return true;
             }
         } else if (c == 's') {
-            if (ctx.check("iblings")) {
+            if (ctx.compareToken(index,"iblings")) {
                 ctx.pushTarget(new LinkedList<>());
                 valueSeparator(ctx);
                 siblingsStart.parse(ctx);
@@ -124,9 +131,6 @@ public class NioExamplePersonParser extends ObjectParser {
                 return true;
             }
         }
-        ctx.skipToQuote();
-        valueSeparator(ctx);
-        SkipParser.PARSER.value(ctx);
-        return true;
+        return SkipParser.PARSER.skipValue(ctx);
     }
 }

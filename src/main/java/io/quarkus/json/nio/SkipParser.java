@@ -436,6 +436,7 @@ public class SkipParser implements JsonParser {
             return true;
         }
         if (c != INT_QUOTE) throw new RuntimeException("Expecting key quote");
+        ctx.startToken(0);
         int stateIndex = ctx.stateIndex();
         if (!key(ctx)) {
             ctx.pushState(getContinueNextKeys(), stateIndex);
@@ -467,6 +468,7 @@ public class SkipParser implements JsonParser {
                 return false;
             }
             if (c != INT_QUOTE) throw new RuntimeException("Expecting key quote");
+            ctx.startToken(0);
             int stateIndex = ctx.stateIndex();
             if (!key(ctx)) {
                 ctx.pushState(getContinueNextKeys(), stateIndex);
@@ -476,16 +478,15 @@ public class SkipParser implements JsonParser {
     }
 
     public boolean key(ParserContext ctx) {
-        ctx.startToken(0);
-        return handleKey(ctx);
-    }
-
-    public boolean handleKey(ParserContext ctx) {
         int c = ctx.skipToQuote();
         if (c == 0) {
             ctx.pushState(getContinueKey());
             return false;
         }
+        return skipValue(ctx);
+    }
+
+    public boolean skipValue(ParserContext ctx) {
         ctx.clearToken();
         int stateIndex = ctx.stateIndex();
         if (!valueSeparator(ctx)) {
@@ -497,7 +498,7 @@ public class SkipParser implements JsonParser {
 
     public boolean continueKey(ParserContext ctx) {
         ctx.popState();
-        return handleKey(ctx);
+        return key(ctx);
     }
 
 }
