@@ -6,11 +6,13 @@ public class MapParser extends ObjectParser {
     ContextValue keyFunction;
     ContextValue valueFunction;
     ParserState valueState;
+    ParserState continueValueState;
 
-    public MapParser(ContextValue keyFunction, ContextValue valueFunction, ParserState valueState) {
+    public MapParser(ContextValue keyFunction, ContextValue valueFunction, ParserState valueState, ParserState continueValueState) {
         this.keyFunction = keyFunction;
         this.valueFunction = valueFunction;
         this.valueState = valueState;
+        this.continueValueState = continueValueState;
     }
 
     @Override
@@ -24,11 +26,19 @@ public class MapParser extends ObjectParser {
         Object key = keyFunction.value(ctx);
         int stateIndex = ctx.stateIndex();
         if (!valueSeparator(ctx)) {
-            ctx.pushState((ctx1) -> fillKey(ctx, key), stateIndex);
-            ctx.pushState(getContinueValue(), stateIndex);
+            ctx.pushState(continueValueState, stateIndex);
+            ctx.pushState((ctx1) -> {
+                ctx1.popState();
+                return fillKey(ctx, key);
+            }, stateIndex);
+            return false;
         }
         if (!valueState.parse(ctx)) {
-            ctx.pushState((ctx1) -> fillKey(ctx1, key), stateIndex);
+            ctx.pushState((ctx1) -> {
+                ctx1.popState();
+                return fillKey(ctx1, key);
+            }, stateIndex);
+            return false;
         }
         return fillKey(ctx, key);
     }

@@ -10,6 +10,7 @@ import io.quarkus.json.nio.ParserContext;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -98,12 +99,104 @@ public class NioExampleParserTest {
             "  }\n" +
             "}";
 
+    static String arrayOnly = "{\n" +
+            "  \"pets\": [ \"itchy\", \"scratchy\"]\n" +
+            "}";
+    @Test
+    public void testNioArrayOnly() {
+        List<String> breakup = breakup(arrayOnly, 1);
+        ParserContext ctx = NioExamplePersonParser.PARSER.parser();
+        for (String str : breakup) {
+            if (ctx.parse(str)) break;
+        }
+        Person person = ctx.target();
+        Assertions.assertTrue(person.getPets().contains("itchy"));
+        Assertions.assertTrue(person.getPets().contains("scratchy"));
+
+    }
+
+    static String kidsOnly = "{\n" +
+            "  \"kids\": {\n" +
+            "    \"Sammy\": {\n" +
+            "      \"name\": \"Sammy\",\n" +
+            "      \"age\": 6\n" +
+            "    },\n" +
+            "    \"Suzi\": {\n" +
+            "      \"name\": \"Suzi\",\n" +
+            "      \"age\": 7\n" +
+            "    }\n" +
+            "  }\n" +
+            "}";
+
+    @Test
+    public void testNioMapObjectOnly() {
+        List<String> breakup = breakup(kidsOnly, 1);
+        ParserContext ctx = NioExamplePersonParser.PARSER.parser();
+        for (String str : breakup) {
+            if (ctx.parse(str)) break;
+        }
+        Person person = ctx.target();
+        Assertions.assertEquals("Sammy", person.getKids().get("Sammy").getName());
+        Assertions.assertEquals(6, person.getKids().get("Sammy").getAge());
+        Assertions.assertEquals("Suzi", person.getKids().get("Suzi").getName());
+        Assertions.assertEquals(7, person.getKids().get("Suzi").getAge());
+
+    }
+
+    static String dadOnly = "{\n" +
+            "  \"dad\": {\n" +
+            "    \"name\": \"John\",\n" +
+            "    \"married\": true\n" +
+            "  }\n" +
+            "}";
+
+    @Test
+    public void testNioObjectOnly() {
+        List<String> breakup = breakup(dadOnly, 1);
+        ParserContext ctx = NioExamplePersonParser.PARSER.parser();
+        for (String str : breakup) {
+            if (ctx.parse(str)) break;
+        }
+        Person person = ctx.target();
+        Assertions.assertEquals("John", person.getDad().getName());
+        Assertions.assertTrue(person.getDad().isMarried());
+
+    }
+
+
+
     @Test
     public void testParser() {
         ParserContext ctx = NioExamplePersonParser.PARSER.parser();
         Assertions.assertTrue(ctx.parse(json));
         Person person = ctx.target();
         validatePerson(person);
+    }
+
+    @Test
+    public void testNioParser() {
+        List<String> breakup = breakup(json, 1);
+        ParserContext ctx = NioExamplePersonParser.PARSER.parser();
+        for (String str : breakup) {
+            if (ctx.parse(str)) break;
+        }
+        Person person = ctx.target();
+        validatePerson(person);
+
+    }
+
+    List<String> breakup(String str, int size) {
+        List<String> breakup = new LinkedList<>();
+        int i = 0;
+        int len = str.length();
+        while (true) {
+            if (size > len - i) {
+                breakup.add(str.substring(i));
+                return breakup;
+            }
+            breakup.add(str.substring(i, i + size));
+            i += size;
+        }
     }
 
     public void validatePerson(Person person) {
@@ -114,13 +207,13 @@ public class NioExampleParserTest {
         Assertions.assertEquals(1, person.getIntMap().get("one"));
         Assertions.assertEquals(2, person.getIntMap().get("two"));
         Assertions.assertEquals("John", person.getDad().getName());
+        Assertions.assertTrue(person.getDad().isMarried());
         Assertions.assertEquals("Sammy", person.getKids().get("Sammy").getName());
         Assertions.assertEquals(6, person.getKids().get("Sammy").getAge());
         Assertions.assertEquals("Suzi", person.getKids().get("Suzi").getName());
         Assertions.assertEquals(7, person.getKids().get("Suzi").getAge());
         Assertions.assertEquals("Ritchie", person.getSiblings().get(0).getName());
         Assertions.assertEquals("Joani", person.getSiblings().get(1).getName());
-        Assertions.assertTrue(person.getDad().isMarried());
         Assertions.assertTrue(person.getPets().contains("itchy"));
         Assertions.assertTrue(person.getPets().contains("scratchy"));
     }

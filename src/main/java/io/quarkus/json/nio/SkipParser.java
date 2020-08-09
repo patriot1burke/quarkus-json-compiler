@@ -27,7 +27,7 @@ public class SkipParser implements JsonParser {
         return startIntegerValue;
     }
     private ParserState continueStartStringValue = this::continueStartStringValue;
-    private ParserState getContinueStartStringValue() {
+    public ParserState getContinueStartStringValue() {
         return continueStartStringValue;
     }
     private ParserState continueStartBooleanValue = this::continueStartBooleanValue;
@@ -82,6 +82,10 @@ public class SkipParser implements JsonParser {
     public ParserState getContinueStartObject() {
         return continueStartObject;
     }
+    private ParserState continueStart = this::continueStart;
+    public ParserState getContinueStart() {
+        return continueStart;
+    }
     private ParserState continueLoopKeys = this::continueLoopKeys;
     public ParserState getContinueLoopKeys() {
         return continueLoopKeys;
@@ -94,15 +98,32 @@ public class SkipParser implements JsonParser {
     public ParserState getContinueKey() {
         return continueKey;
     }
+    private ParserState continueStartList = this::continueStartList;
+    public ParserState getContinueStartList() {
+        return continueStartList;
+    }
 
 
+    public boolean continueStart(ParserContext ctx) {
+        ctx.popState();
+        return start(ctx);
+    }
 
     public boolean start(ParserContext ctx) {
         return value(ctx);
     }
 
+    public boolean continueStartList(ParserContext ctx) {
+        ctx.popState();
+        return startList(ctx);
+    }
+
     public boolean startList(ParserContext ctx) {
         int c = ctx.skipWhitespace();
+        if (c == 0) {
+            ctx.pushState(getContinueStartList());
+            return false;
+        }
         if (c == INT_LBRACKET) {
             beginObject(ctx);
             return loopListValues(ctx);
@@ -110,6 +131,7 @@ public class SkipParser implements JsonParser {
             throw new RuntimeException("Expecting start of array");
         }
     }
+
 
     public boolean continueStartStringValue(ParserContext ctx) {
         ctx.popState();
@@ -123,11 +145,15 @@ public class SkipParser implements JsonParser {
             return false;
         }
         if (c == INT_QUOTE) {
-            ctx.startToken(0);
+            startTokenNextConsumed(ctx);
             return stringValue(ctx);
         } else {
             throw new RuntimeException("Illegal value syntax");
         }
+    }
+
+    public void startTokenNextConsumed(ParserContext ctx) {
+        // complete, do nothing if skipping
     }
 
     public boolean continueStartBooleanValue(ParserContext ctx) {
@@ -142,11 +168,15 @@ public class SkipParser implements JsonParser {
             return false;
         }
         if (c== 't' || c == 'f') {
-            ctx.startToken(-1);
+            startToken(ctx);
             return booleanValue(ctx);
         } else {
             throw new RuntimeException("Illegal value syntax");
         }
+    }
+
+    public void startToken(ParserContext ctx) {
+        // complete, do nothing if skipping
     }
 
     public boolean continueValue(ParserContext ctx) {
@@ -161,13 +191,13 @@ public class SkipParser implements JsonParser {
             return false;
         }
         if (c == INT_QUOTE) {
-            ctx.startToken(0);
+            startTokenNextConsumed(ctx);
             return stringValue(ctx);
         } else if (isDigit(c) || c == INT_MINUS || c == INT_PLUS) {
-            ctx.startToken(-1);
+            startToken(ctx);
             return numberValue(ctx);
         } else if (c == INT_t || c == INT_f) {
-            ctx.startToken(-1);
+            startToken(ctx);
             return booleanValue(ctx);
         } else if (c == INT_LCURLY) {
             beginObject(ctx);
@@ -185,6 +215,12 @@ public class SkipParser implements JsonParser {
         return loopListValues(ctx);
     }
 
+    public boolean continueAddListValue(ParserContext ctx) {
+        ctx.popState();
+        addListValue(ctx);
+        return true;
+    }
+
     public boolean loopListValues(ParserContext ctx) {
         int c = ctx.skipWhitespace();
         if (c == 0) {
@@ -197,6 +233,7 @@ public class SkipParser implements JsonParser {
         ctx.rewind();
         int stateIndex = ctx.stateIndex();
         if (!listValue(ctx)) {
+            ctx.pushState(this::continueAddListValue, stateIndex);
             ctx.pushState(getContinueNextListValues(), stateIndex);
             return false;
         }
@@ -222,6 +259,7 @@ public class SkipParser implements JsonParser {
             if (c != INT_COMMA) throw new RuntimeException("Expecting comma separator");
             int stateIndex = ctx.stateIndex();
             if (!listValue(ctx)) {
+                ctx.pushState(this::continueAddListValue, stateIndex);
                 ctx.pushState(getContinueNextListValues(), stateIndex);
                 return false;
             }
@@ -270,9 +308,13 @@ public class SkipParser implements JsonParser {
             ctx.pushState(getContinueStringValue());
             return false;
         }
-        ctx.endToken();
+        endToken(ctx);
         endStringValue(ctx);
         return true;
+    }
+
+    public void endToken(ParserContext ctx) {
+        // complete, do nothing if skipping
     }
 
     public void endStringValue(ParserContext ctx) {
@@ -291,7 +333,7 @@ public class SkipParser implements JsonParser {
             return false;
         }
         if (isDigit(c) || c == INT_MINUS || c == INT_PLUS) {
-            ctx.startToken(-1);
+            startToken(ctx);
             return integerValue(ctx);
         } else {
             throw new RuntimeException("Illegal integer value");
@@ -309,7 +351,7 @@ public class SkipParser implements JsonParser {
             ctx.pushState(getContinueIntegerValue());
             return false;
         }
-        ctx.endToken();
+        endToken(ctx);
         endNumberValue(ctx);
         ctx.rewind();
         return true;
@@ -330,7 +372,7 @@ public class SkipParser implements JsonParser {
             return false;
         }
         if (isDigit(c) || c == INT_MINUS || c == INT_PLUS) {
-            ctx.startToken(-1);
+            startToken(ctx);
             return numberValue(ctx);
         } else {
             throw new RuntimeException("Illegal number value");
@@ -351,7 +393,7 @@ public class SkipParser implements JsonParser {
         if (c == INT_PERIOD) {
             return floatValue(ctx);
         } else {
-            ctx.endToken();
+            endToken(ctx);
             endNumberValue(ctx);
             ctx.rewind();
             return true;
@@ -367,8 +409,9 @@ public class SkipParser implements JsonParser {
         int c = ctx.skipDigits();
         if (c == 0) {
             ctx.pushState(getContinueFloatValue());
+            return false;
         }
-        ctx.endToken();
+        endToken(ctx);
         endFloatValue(ctx);
         ctx.rewind();
         return true;
@@ -389,7 +432,7 @@ public class SkipParser implements JsonParser {
             ctx.pushState(getContinueBooleanValue());
             return false;
         }
-        ctx.endToken();
+        endToken(ctx);
         endBooleanValue(ctx);
         ctx.rewind();
         return true;
@@ -436,7 +479,7 @@ public class SkipParser implements JsonParser {
             return true;
         }
         if (c != INT_QUOTE) throw new RuntimeException("Expecting key quote");
-        ctx.startToken(0);
+        startTokenNextConsumed(ctx);
         int stateIndex = ctx.stateIndex();
         if (!key(ctx)) {
             ctx.pushState(getContinueNextKeys(), stateIndex);
@@ -468,7 +511,7 @@ public class SkipParser implements JsonParser {
                 return false;
             }
             if (c != INT_QUOTE) throw new RuntimeException("Expecting key quote");
-            ctx.startToken(0);
+            startTokenNextConsumed(ctx);
             int stateIndex = ctx.stateIndex();
             if (!key(ctx)) {
                 ctx.pushState(getContinueNextKeys(), stateIndex);

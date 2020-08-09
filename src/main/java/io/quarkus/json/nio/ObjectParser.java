@@ -7,4 +7,20 @@ public class ObjectParser extends SkipParser {
         return startObject(ctx);
     }
 
+    @Override
+    public void startToken(ParserContext ctx) {
+        ctx.startToken();
+    }
+
+    @Override
+    public void startTokenNextConsumed(ParserContext ctx) {
+        ctx.startTokenNextConsumed();
+    }
+
+    @Override
+    public void endToken(ParserContext ctx) {
+        ctx.endToken();
+    }
+
+
 }

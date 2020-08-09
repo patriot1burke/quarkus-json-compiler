@@ -34,12 +34,12 @@ public class GenericParser extends SkipParser implements JsonParser {
             ctx.pushState(getContinueKey());
             return false;
         }
-        ctx.endToken();
+        endToken(ctx);
         String key = ctx.popToken();
         int stateIndex = ctx.stateIndex();
         if (!valueSeparator(ctx)) {
-            ctx.pushState((ctx1) -> fillKey(ctx1, key), stateIndex);
             ctx.pushState(getContinueValue(), stateIndex);
+            ctx.pushState((ctx1) -> fillKey(ctx1, key), stateIndex);
         }
         if (!value(ctx)) {
             ctx.pushState((ctx1) -> fillKey(ctx1, key), stateIndex);
