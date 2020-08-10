@@ -10,19 +10,16 @@ import io.quarkus.gizmo.FieldDescriptor;
 import io.quarkus.gizmo.MethodCreator;
 import io.quarkus.gizmo.MethodDescriptor;
 import io.quarkus.gizmo.ResultHandle;
-import io.quarkus.json.parser.IntChar;
-import io.quarkus.json.parser.ObjectParser;
-import io.quarkus.json.parser.ParserContext;
-import io.quarkus.json.parser.ParserState;
-import io.quarkus.json.parser.SkipParser;
+import io.quarkus.json.deserialize.buffered.IntChar;
+import io.quarkus.json.deserialize.buffered.ObjectParser;
+import io.quarkus.json.deserialize.buffered.ParserContext;
+import io.quarkus.json.deserialize.buffered.SkipParser;
 
-import java.io.PrintStream;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
