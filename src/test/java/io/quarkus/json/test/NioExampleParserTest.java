@@ -265,6 +265,7 @@ public class NioExampleParserTest {
             List<String> breakup = breakup(generic, i);
             ParserContext ctx = GenericParser.PARSER.parser();
             for (String str : breakup) {
+                //System.out.println(str);
                 if (ctx.parse(str)) break;
             }
             validateGeneric(ctx);

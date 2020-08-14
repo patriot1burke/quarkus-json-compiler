@@ -64,12 +64,14 @@ public class GenericParser extends BaseParser implements JsonParser {
                 ctx1.popState();
                 return fillKey(ctx1, key);
             }, stateIndex);
+            return false;
         }
         if (!value(ctx)) {
             ctx.pushState((ctx1) -> {
                 ctx1.popState();
                 return fillKey(ctx1, key);
             }, stateIndex);
+            return false;
         }
         return fillKey(ctx, key);
     }
