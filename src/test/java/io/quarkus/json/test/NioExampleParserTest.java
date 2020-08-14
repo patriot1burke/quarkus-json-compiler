@@ -167,6 +167,17 @@ public class NioExampleParserTest {
 
     @Test
     public void testParser() {
+        for (int i = 1; i <= json.length(); i++) {
+            System.out.println("Buffer size: " + i);
+            List<String> breakup = breakup(json, i);
+            ParserContext ctx = NioPersonParser.PARSER.parser();
+            for (String str : breakup) {
+                if (ctx.parse(str)) break;
+            }
+            Person person = ctx.target();
+            validatePerson(person);
+
+        }
         ParserContext ctx = NioPersonParser.PARSER.parser();
         Assertions.assertTrue(ctx.parse(json));
         Person person = ctx.target();
@@ -175,11 +186,12 @@ public class NioExampleParserTest {
 
     @Test
     public void testNioParser() {
-        List<String> breakup = breakup(json, 1);
+        List<String> breakup = breakup(json, 7);
         ParserContext ctx = NioPersonParser.PARSER.parser();
         for (String str : breakup) {
             if (ctx.parse(str)) break;
         }
+        System.out.println();
         Person person = ctx.target();
         validatePerson(person);
 
@@ -248,9 +260,25 @@ public class NioExampleParserTest {
 
     @Test
     public void testGenericParser() {
+        for (int i = 1; i <= generic.length(); i++) {
+            System.out.println("Buffer size: " + i);
+            List<String> breakup = breakup(generic, i);
+            ParserContext ctx = GenericParser.PARSER.parser();
+            for (String str : breakup) {
+                if (ctx.parse(str)) break;
+            }
+            validateGeneric(ctx);
+
+        }
+
         JsonParser p = GenericParser.PARSER;
         ParserContext ctx = p.parser();
         Assertions.assertTrue(ctx.parse(generic));
+        validateGeneric(ctx);
+
+    }
+
+    public void validateGeneric(ParserContext ctx) {
         Map person = ctx.target();
         Assertions.assertEquals("Bill", person.get("name"));
         Assertions.assertEquals(50L, person.get("age"));
@@ -272,7 +300,6 @@ public class NioExampleParserTest {
         Assertions.assertEquals(1L, list2.get(1));
         Assertions.assertEquals(2L, list2.get(2));
         Assertions.assertEquals(3L, list2.get(3));
-
     }
 
     static String genericList = "[\n" +

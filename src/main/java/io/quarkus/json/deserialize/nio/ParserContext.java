@@ -240,7 +240,7 @@ public class ParserContext {
             return initialState.parse(this);
         }
 
-        while (ptr < buffer.length && (state != null & !state.isEmpty())) {
+        while (ptr < buffer.length || (state != null && !state.isEmpty())) {
             if (!state.peek().parse(this)) {
                 return false;
             }
