@@ -1,8 +1,8 @@
 package io.quarkus.json.test;
 
 import io.quarkus.gizmo.TestClassLoader;
-import io.quarkus.json.generator.Deserializer;
-import io.quarkus.json.deserialize.buffered.JsonParser;
+import io.quarkus.json.generator.buffered.Deserializer;
+import io.quarkus.json.deserializer.buffered.JsonParser;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

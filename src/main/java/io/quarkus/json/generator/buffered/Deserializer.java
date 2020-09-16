@@ -1,4 +1,4 @@
-package io.quarkus.json.generator;
+package io.quarkus.json.generator.buffered;
 
 import io.quarkus.gizmo.AssignableResultHandle;
 import io.quarkus.gizmo.BranchResult;
@@ -10,10 +10,10 @@ import io.quarkus.gizmo.FieldDescriptor;
 import io.quarkus.gizmo.MethodCreator;
 import io.quarkus.gizmo.MethodDescriptor;
 import io.quarkus.gizmo.ResultHandle;
-import io.quarkus.json.deserialize.buffered.IntChar;
-import io.quarkus.json.deserialize.buffered.ObjectParser;
-import io.quarkus.json.deserialize.buffered.ParserContext;
-import io.quarkus.json.deserialize.buffered.SkipParser;
+import io.quarkus.json.deserializer.buffered.IntChar;
+import io.quarkus.json.deserializer.buffered.ObjectParser;
+import io.quarkus.json.deserializer.buffered.ParserContext;
+import io.quarkus.json.deserializer.buffered.SkipParser;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;

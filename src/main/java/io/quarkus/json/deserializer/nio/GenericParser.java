@@ -1,4 +1,4 @@
-package io.quarkus.json.deserialize.nio;
+package io.quarkus.json.deserializer.nio;
 
 import java.util.HashMap;
 import java.util.LinkedList;

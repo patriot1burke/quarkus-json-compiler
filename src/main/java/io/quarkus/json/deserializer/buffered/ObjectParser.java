@@ -1,4 +1,4 @@
-package io.quarkus.json.deserialize.buffered;
+package io.quarkus.json.deserializer.buffered;
 
 public class ObjectParser extends SkipParser {
     public static final ObjectParser PARSER = new ObjectParser();

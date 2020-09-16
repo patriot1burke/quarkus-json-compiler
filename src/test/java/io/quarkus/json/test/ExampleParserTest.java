@@ -4,9 +4,9 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
-import io.quarkus.json.deserialize.buffered.GenericParser;
-import io.quarkus.json.deserialize.buffered.JsonParser;
-import io.quarkus.json.deserialize.buffered.ParserContext;
+import io.quarkus.json.deserializer.buffered.GenericParser;
+import io.quarkus.json.deserializer.buffered.JsonParser;
+import io.quarkus.json.deserializer.buffered.ParserContext;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

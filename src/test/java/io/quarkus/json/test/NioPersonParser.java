@@ -1,12 +1,12 @@
 package io.quarkus.json.test;
 
-import io.quarkus.json.deserialize.nio.CollectionParser;
-import io.quarkus.json.deserialize.nio.ContextValue;
-import io.quarkus.json.deserialize.nio.MapParser;
-import io.quarkus.json.deserialize.nio.ObjectParser;
-import io.quarkus.json.deserialize.nio.ParserContext;
-import io.quarkus.json.deserialize.nio.ParserState;
-import io.quarkus.json.deserialize.nio.BaseParser;
+import io.quarkus.json.deserializer.nio.CollectionParser;
+import io.quarkus.json.deserializer.nio.ContextValue;
+import io.quarkus.json.deserializer.nio.MapParser;
+import io.quarkus.json.deserializer.nio.ObjectParser;
+import io.quarkus.json.deserializer.nio.ParserContext;
+import io.quarkus.json.deserializer.nio.ParserState;
+import io.quarkus.json.deserializer.nio.BaseParser;
 
 import java.util.HashMap;
 import java.util.LinkedList;

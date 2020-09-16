@@ -1,4 +1,4 @@
-package io.quarkus.json.deserialize.nio;
+package io.quarkus.json.deserializer.buffered;
 
 public class IntChar {
     public final static int INT_TAB = '\t';

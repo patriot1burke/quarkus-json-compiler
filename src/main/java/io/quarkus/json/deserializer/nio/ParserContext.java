@@ -1,11 +1,11 @@
-package io.quarkus.json.deserialize.nio;
+package io.quarkus.json.deserializer.nio;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayDeque;
 import java.util.LinkedList;
 
-import static io.quarkus.json.deserialize.buffered.IntChar.*;
+import static io.quarkus.json.deserializer.nio.IntChar.*;
 
 public class ParserContext {
     protected LinkedList<ParserState> state;

@@ -1,6 +1,6 @@
-package io.quarkus.json.deserialize.nio;
+package io.quarkus.json.deserializer.nio;
 
-import static io.quarkus.json.deserialize.buffered.IntChar.*;
+import static io.quarkus.json.deserializer.nio.IntChar.*;
 
 public class ParsePrimitives {
     static int[] TRUE_VALUE = {INT_t, INT_r, INT_u, INT_e};

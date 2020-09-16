@@ -1,8 +1,8 @@
-package io.quarkus.json.deserialize.buffered;
+package io.quarkus.json.deserializer.buffered;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayDeque;
-import static io.quarkus.json.deserialize.buffered.IntChar.*;
+import static io.quarkus.json.deserializer.buffered.IntChar.*;
 
 public class ParserContext {
     protected ArrayDeque<Object> target = new ArrayDeque<>();

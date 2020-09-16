@@ -1,6 +1,6 @@
-package io.quarkus.json.deserialize.nio;
+package io.quarkus.json.deserializer.nio;
 
-import static io.quarkus.json.deserialize.buffered.IntChar.*;
+import static io.quarkus.json.deserializer.nio.IntChar.*;
 
 public class BaseParser implements JsonParser {
     public static final BaseParser PARSER = new BaseParser();

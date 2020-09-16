@@ -1,4 +1,4 @@
-package io.quarkus.json.deserialize.buffered;
+package io.quarkus.json.deserializer.buffered;
 
 import java.util.HashMap;
 import java.util.LinkedList;

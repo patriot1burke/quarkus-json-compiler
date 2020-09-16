@@ -4,9 +4,9 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
-import io.quarkus.json.deserialize.nio.GenericParser;
-import io.quarkus.json.deserialize.nio.JsonParser;
-import io.quarkus.json.deserialize.nio.ParserContext;
+import io.quarkus.json.deserializer.nio.GenericParser;
+import io.quarkus.json.deserializer.nio.JsonParser;
+import io.quarkus.json.deserializer.nio.ParserContext;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -378,7 +378,7 @@ public class NioExampleParserTest {
                 .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true);
         ObjectReader reader = mapper.readerFor(Person.class);
         JsonParser parser = NioPersonParser.PARSER;
-        io.quarkus.json.deserialize.buffered.JsonParser lexer = BufferedPersonParser.PARSER;
+        io.quarkus.json.deserializer.buffered.JsonParser lexer = BufferedPersonParser.PARSER;
         byte[] array = json.getBytes("UTF-8");
         // warm up
         int ITERATIONS = 100000;

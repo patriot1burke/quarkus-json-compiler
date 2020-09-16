@@ -1,4 +1,4 @@
-package io.quarkus.json.deserialize.nio;
+package io.quarkus.json.deserializer.nio;
 
 public class ObjectParser extends BaseParser {
     public static final ObjectParser PARSER = new ObjectParser();
