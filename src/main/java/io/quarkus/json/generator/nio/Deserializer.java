@@ -7,13 +7,15 @@ import io.quarkus.gizmo.ClassCreator;
 import io.quarkus.gizmo.ClassOutput;
 import io.quarkus.gizmo.FieldCreator;
 import io.quarkus.gizmo.FieldDescriptor;
+import io.quarkus.gizmo.FunctionCreator;
 import io.quarkus.gizmo.MethodCreator;
 import io.quarkus.gizmo.MethodDescriptor;
 import io.quarkus.gizmo.ResultHandle;
+import io.quarkus.json.deserializer.nio.BaseParser;
 import io.quarkus.json.deserializer.nio.IntChar;
 import io.quarkus.json.deserializer.nio.ObjectParser;
 import io.quarkus.json.deserializer.nio.ParserContext;
-import io.quarkus.json.deserializer.nio.BaseParser;
+import io.quarkus.json.deserializer.nio.ParserState;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -24,6 +26,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
+import static org.objectweb.asm.Opcodes.ACC_PRIVATE;
+import static org.objectweb.asm.Opcodes.ACC_FINAL;
 import static org.objectweb.asm.Opcodes.ACC_STATIC;
 
 public class Deserializer {
@@ -95,27 +99,11 @@ public class Deserializer {
     void generate() {
         findSetters(targetType);
 
-        singleton();
+        staticInitializer();
         beginObject();
         key();
 
         creator.close();
-    }
-
-    private void key() {
-        MethodCreator method = creator.getMethodCreator("key", void.class, ParserContext.class);
-        _ParserContext ctx = new _ParserContext(method.getMethodParam(0));
-        AssignableResultHandle c = method.createVariable(int.class);
-        chooseField(method, ctx, c, setters, 0);
-
-        ctx.skipToQuote(method);
-        method.invokeVirtualMethod(valueSepator(), method.getThis(), ctx.ctx);
-        method.invokeVirtualMethod(
-                MethodDescriptor.ofMethod(ObjectParser.class, "unpushedValue", void.class, ParserContext.class),
-                method.readStaticField(FieldDescriptor.of(ObjectParser.class, "PARSER", ObjectParser.class)),
-                        ctx.ctx
-                );
-        method.returnValue(null);
     }
 
     private void beginObject() {
@@ -126,7 +114,7 @@ public class Deserializer {
         method.returnValue(null);
     }
 
-    private void singleton() {
+    private void staticInitializer() {
         FieldCreator PARSER = creator.getFieldCreator("PARSER", fqn()).setModifiers(ACC_STATIC | ACC_PUBLIC);
 
 
@@ -134,27 +122,70 @@ public class Deserializer {
         staticConstructor.setModifiers(ACC_STATIC);
         ResultHandle instance = staticConstructor.newInstance(MethodDescriptor.ofConstructor(fqn()));
         staticConstructor.writeStaticField(PARSER.getFieldDescriptor(), instance);
+
+        for (Setter setter : setters) {
+            String endName = endProperty(setter);
+            FieldCreator endField = creator.getFieldCreator(endName, ParserState.class).setModifiers(ACC_STATIC | ACC_PRIVATE);
+
+            MethodCreator method = creator.getMethodCreator(endName, void.class, ParserContext.class);
+            { // todo move to method
+                method.setModifiers(ACC_STATIC | ACC_FINAL | ACC_PUBLIC);
+                _ParserContext ctx = new _ParserContext(method.getMethodParam(0));
+                AssignableResultHandle target = method.createVariable(targetType);
+                method.assign(target, ctx.target(method));
+                AssignableResultHandle value = method.createVariable(setter.type);
+                method.assign(value, ctx.popIntToken(method));
+                MethodDescriptor set = MethodDescriptor.ofMethod(setter.method);
+                method.invokeVirtualMethod(set, target, value);
+                method.returnValue(null);
+            }
+
+            {
+                FunctionCreator endFunction = staticConstructor.createFunction(ParserState.class);
+                BytecodeCreator ebc = endFunction.getBytecode();
+                _ParserContext ctx = new _ParserContext(ebc.getMethodParam(0));
+                ctx.popState(ebc);
+                ebc.invokeStaticMethod(method.getMethodDescriptor(), ctx.ctx);
+                ebc.returnValue(ebc.load(true));
+                staticConstructor.writeStaticField(endField.getFieldDescriptor(), endFunction.getInstance());
+            }
+        }
         staticConstructor.returnValue(null);
     }
 
-    private void chooseField(BytecodeCreator scope, _ParserContext ctx, AssignableResultHandle c, List<Setter> setters, int offset) {
+    private String endProperty(Setter setter) {
+        return setter.property + "End";
+    }
+
+    private void key() {
+        MethodCreator method = creator.getMethodCreator("key", boolean.class, ParserContext.class);
+        _ParserContext ctx = new _ParserContext(method.getMethodParam(0));
+
+        BytecodeCreator scope = method.createScope();
+        BytecodeCreator ifTrue = scope.ifIntegerEqual(ctx.skipToQuote(scope), scope.load((int)0)).trueBranch();
+        ctx.pushState(ifTrue, ifTrue.readInstanceField(FieldDescriptor.of(fqn(), "continueKey", ParserState.class), ifTrue.getThis()));
+        ifTrue.returnValue(ifTrue.load(false));
+        ctx.endToken(method);
+        ResultHandle stateIndex = ctx.stateIndex(method);
+
+        chooseField(method, ctx, stateIndex, setters, 0);
+
+        ResultHandle result = method.invokeVirtualMethod(MethodDescriptor.ofMethod(BaseParser.class, "skipValue", boolean.class, ParserContext.class),
+                method.readStaticField(FieldDescriptor.of(BaseParser.class, "PARSER", BaseParser.class)), ctx.ctx);
+        method.returnValue(result);
+    }
+
+    private void chooseField(BytecodeCreator scope, _ParserContext ctx, ResultHandle stateIndex, List<Setter> setters, int offset) {
         if (setters.size() == 1) {
-            BytecodeCreator ifScope = scope.createScope();
             Setter setter = setters.get(0);
-            ResultHandle check = ctx.check(ifScope, ifScope.load(setter.name.substring(offset)));
-            matchHandler(ctx, setter, ifScope.ifNonZero(check).trueBranch());
+            compareToken(scope, ctx, stateIndex, offset, setter);
             return;
         }
-        scope.assign(c, ctx.consume(scope));
+        ResultHandle c = ctx.tokenCharAt(scope, offset);
         for (int i = 0; i < setters.size(); i++) {
             Setter setter = setters.get(i);
             if (offset >= setter.name.length()) {
-                BytecodeCreator ifScope = scope.createScope();
-                ResultHandle quote = ifScope.readStaticField(FieldDescriptor.of(IntChar.class, "INT_QUOTE", int.class));
-                BranchResult branchResult = ifScope.ifIntegerEqual(c, quote);
-                BytecodeCreator trueBranch = branchResult.trueBranch();
-                matchHandler(ctx, setter, trueBranch);
-                scope = branchResult.falseBranch();
+                compareToken(scope, ctx, stateIndex, offset, setter);
                 continue;
             }
             char ch = setter.name.charAt(offset);
@@ -171,28 +202,45 @@ public class Deserializer {
                     break;
                 }
             }
-            chooseField(branchResult.trueBranch(), ctx, c, sameChars, offset + 1);
+            chooseField(branchResult.trueBranch(), ctx, stateIndex, sameChars, offset + 1);
             scope = branchResult.falseBranch();
         }
 
     }
 
-    private void matchHandler(_ParserContext ctx, Setter setter, BytecodeCreator scope) {
-        MethodDescriptor valueSeparator = valueSepator();
-        scope.invokeVirtualMethod(valueSeparator, scope.getThis(), ctx.ctx);
-        MethodDescriptor startIntegerValue = MethodDescriptor.ofMethod(fqn(), "startIntegerValue", void.class.getName(), ParserContext.class.getName());
-        scope.invokeVirtualMethod(startIntegerValue, scope.getThis(), ctx.ctx);
-        AssignableResultHandle target = scope.createVariable(targetType);
-        scope.assign(target, ctx.target(scope));
-        AssignableResultHandle value = scope.createVariable(setter.type);
-        scope.assign(value, ctx.popIntToken(scope));
-        MethodDescriptor set = MethodDescriptor.ofMethod(setter.method);
-        scope.invokeVirtualMethod(set, target, value);
-        scope.returnValue(null);
+    private void compareToken(BytecodeCreator scope, _ParserContext ctx, ResultHandle stateIndex, int offset, Setter setter) {
+        BytecodeCreator ifScope = scope.createScope();
+        ResultHandle check = ctx.compareToken(ifScope, ifScope.load(offset), ifScope.load(setter.name.substring(offset)));
+        matchHandler(ctx, stateIndex, setter, ifScope.ifNonZero(check).trueBranch());
     }
 
-    private MethodDescriptor valueSepator() {
-        return MethodDescriptor.ofMethod(fqn(), "valueSeparator", void.class.getName(), ParserContext.class.getName());
+    private void matchHandler(_ParserContext ctx, ResultHandle stateIndex, Setter setter, BytecodeCreator scope) {
+        BytecodeCreator ifScope = scope.createScope();
+        MethodDescriptor valueSeparator = valueSeparator();
+        ResultHandle passed = ifScope.invokeVirtualMethod(valueSeparator, scope.getThis(), ctx.ctx);
+        ifScope = ifScope.ifZero(passed).trueBranch();
+        ctx.pushState(ifScope,
+                ifScope.readInstanceField(FieldDescriptor.of(fqn(), "continueStartIntegerValue", ParserState.class), scope.getThis()),
+                stateIndex);
+        ctx.pushState(ifScope,
+                ifScope.readStaticField(FieldDescriptor.of(fqn(), endProperty(setter), ParserState.class)), stateIndex);
+        ifScope.returnValue(ifScope.load(false));
+
+        ifScope = scope.createScope();
+        MethodDescriptor startIntegerValue = MethodDescriptor.ofMethod(fqn(), "startIntegerValue", boolean.class.getName(), ParserContext.class.getName());
+        passed = ifScope.invokeVirtualMethod(startIntegerValue, scope.getThis(), ctx.ctx);
+        ifScope = ifScope.ifZero(passed).trueBranch();
+        ctx.pushState(ifScope,
+                ifScope.readStaticField(FieldDescriptor.of(fqn(), endProperty(setter), ParserState.class)),
+                        stateIndex);
+        ifScope.returnValue(ifScope.load(false));
+
+        scope.invokeStaticMethod(MethodDescriptor.ofMethod(fqn(), endProperty(setter), void.class, ParserContext.class), ctx.ctx);
+        scope.returnValue(scope.load(true));
+    }
+
+    private MethodDescriptor valueSeparator() {
+        return MethodDescriptor.ofMethod(fqn(), "valueSeparator", boolean.class.getName(), ParserContext.class.getName());
     }
 
     private String fqn() {
@@ -223,13 +271,15 @@ public class Deserializer {
     }
 
     class Setter {
-        String name;
+        String name; // json key
+        String property; // this is method name without set/get
         Method method;
         Class type;
         Type genericType;
 
         public Setter(String name, Method method, Class type, Type genericType) {
             this.name = name;
+            this.property = name;
             this.method = method;
             this.type = type;
             this.genericType = genericType;
@@ -252,8 +302,20 @@ public class Deserializer {
             scope.invokeVirtualMethod(MethodDescriptor.ofMethod(ParserContext.class, "clearToken", void.class), ctx);
         }
 
-        public ResultHandle check(BytecodeCreator scope, ResultHandle str) {
-            return scope.invokeVirtualMethod(MethodDescriptor.ofMethod(ParserContext.class, "check", boolean.class, String.class), ctx, str);
+        public void popState(BytecodeCreator scope) {
+            scope.invokeVirtualMethod(MethodDescriptor.ofMethod(ParserContext.class, "popState", void.class), ctx);
+        }
+
+        public void endToken(BytecodeCreator scope) {
+            scope.invokeVirtualMethod(MethodDescriptor.ofMethod(ParserContext.class, "endToken", void.class), ctx);
+        }
+
+        public ResultHandle compareToken(BytecodeCreator scope, ResultHandle index, ResultHandle str) {
+            return scope.invokeVirtualMethod(MethodDescriptor.ofMethod(ParserContext.class, "compareToken", boolean.class, int.class, String.class), ctx, index, str);
+        }
+
+        public ResultHandle tokenCharAt(BytecodeCreator scope, int index) {
+            return scope.invokeVirtualMethod(MethodDescriptor.ofMethod(ParserContext.class, "tokenCharAt", int.class, int.class), ctx, scope.load(index));
         }
 
 
@@ -282,8 +344,20 @@ public class Deserializer {
             scope.invokeVirtualMethod(MethodDescriptor.ofMethod(ParserContext.class, "pushTarget", void.class, Object.class), ctx, obj);
         }
 
+        public void pushState(BytecodeCreator scope, ResultHandle func, ResultHandle index) {
+            scope.invokeVirtualMethod(MethodDescriptor.ofMethod(ParserContext.class, "pushState", void.class, ParserState.class, int.class), ctx, func, index);
+        }
+
+        public void pushState(BytecodeCreator scope, ResultHandle func) {
+            scope.invokeVirtualMethod(MethodDescriptor.ofMethod(ParserContext.class, "pushState", void.class, ParserState.class), ctx, func);
+        }
+
         public ResultHandle popTarget(BytecodeCreator scope) {
             return scope.invokeVirtualMethod(MethodDescriptor.ofMethod(ParserContext.class, "popTarget", Object.class), ctx);
+        }
+
+        public ResultHandle stateIndex(BytecodeCreator scope) {
+            return scope.invokeVirtualMethod(MethodDescriptor.ofMethod(ParserContext.class, "stateIndex", int.class), ctx);
         }
 
         public ResultHandle skipToQuote(BytecodeCreator scope) {
