@@ -208,14 +208,18 @@ public class ParserContext {
     public int popIntToken() {
         return (int) popLongToken();
     }
+    public short popShortToken() {
+        return (short) popLongToken();
+    }
+    public byte popByteToken() {
+        return (byte) popLongToken();
+    }
 
     public float popFloatToken() {
         return Float.parseFloat(popToken());
     }
 
     public double popDoubleToken() {
-        if (tokenStart < 0) throw new RuntimeException("Token not started.");
-        if (tokenEnd < 0) throw new RuntimeException("Token not ended.");
         return Double.parseDouble(popToken());
     }
 

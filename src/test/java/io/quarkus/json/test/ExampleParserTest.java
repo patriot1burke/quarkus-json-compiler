@@ -184,7 +184,7 @@ public class ExampleParserTest {
         JsonParser lexer = BufferedPersonParser.PARSER;
         byte[] array = json.getBytes("UTF-8");
         // warm up
-        int ITERATIONS = 1000000;
+        int ITERATIONS = 10000;
         for (int i = 0; i < ITERATIONS; i++) {
             reader.readValue(array);
             lexer.parser().parse(array);
@@ -208,16 +208,5 @@ public class ExampleParserTest {
             reader.readValue(array);
         }
         System.out.println("Jackson took: " + (System.currentTimeMillis() - start) + " (ms)");
-
-
-
-    }
-
-    @Test
-    public void testProfile() throws Exception {
-        for (int i = 0; i < 100000; i++) {
-            BufferedPersonParser.PARSER.parser().parse(json);
-        }
-
     }
 }

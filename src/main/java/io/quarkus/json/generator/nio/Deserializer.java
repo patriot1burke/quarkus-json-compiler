@@ -125,31 +125,54 @@ public class Deserializer {
         for (Setter setter : setters) {
             String endName = endProperty(setter);
             FieldCreator endField = creator.getFieldCreator(endName, ParserState.class).setModifiers(ACC_STATIC | ACC_PRIVATE);
-
-            MethodCreator method = creator.getMethodCreator(endName, void.class, ParserContext.class);
-            { // todo move to method
-                method.setModifiers(ACC_STATIC | ACC_FINAL | ACC_PUBLIC);
-                _ParserContext ctx = new _ParserContext(method.getMethodParam(0));
-                AssignableResultHandle target = method.createVariable(targetType);
-                method.assign(target, ctx.target(method));
-                AssignableResultHandle value = method.createVariable(setter.type);
-                method.assign(value, ctx.popIntToken(method));
-                MethodDescriptor set = MethodDescriptor.ofMethod(setter.method);
-                method.invokeVirtualMethod(set, target, value);
-                method.returnValue(null);
-            }
-
-            {
-                FunctionCreator endFunction = staticConstructor.createFunction(ParserState.class);
-                BytecodeCreator ebc = endFunction.getBytecode();
-                _ParserContext ctx = new _ParserContext(ebc.getMethodParam(0));
-                ctx.popState(ebc);
-                ebc.invokeStaticMethod(method.getMethodDescriptor(), ctx.ctx);
-                ebc.returnValue(ebc.load(true));
-                staticConstructor.writeStaticField(endField.getFieldDescriptor(), endFunction.getInstance());
-            }
+            MethodCreator method = propertyEndMethod(setter, endName);
+            propertyEndFunction(staticConstructor, endField, method);
         }
         staticConstructor.returnValue(null);
+    }
+
+    private void propertyEndFunction(MethodCreator staticConstructor, FieldCreator endField, MethodCreator method) {
+        FunctionCreator endFunction = staticConstructor.createFunction(ParserState.class);
+        BytecodeCreator ebc = endFunction.getBytecode();
+        _ParserContext ctx = new _ParserContext(ebc.getMethodParam(0));
+        ctx.popState(ebc);
+        ebc.invokeStaticMethod(method.getMethodDescriptor(), ctx.ctx);
+        ebc.returnValue(ebc.load(true));
+        staticConstructor.writeStaticField(endField.getFieldDescriptor(), endFunction.getInstance());
+    }
+
+    private MethodCreator propertyEndMethod(Setter setter, String endName) {
+        MethodCreator method = creator.getMethodCreator(endName, void.class, ParserContext.class);
+        method.setModifiers(ACC_STATIC | ACC_FINAL | ACC_PUBLIC);
+        _ParserContext ctx = new _ParserContext(method.getMethodParam(0));
+        AssignableResultHandle target = method.createVariable(targetType);
+        method.assign(target, ctx.target(method));
+        MethodDescriptor set = MethodDescriptor.ofMethod(setter.method);
+        method.invokeVirtualMethod(set, target, popSetterValue(ctx, setter, method));
+        method.returnValue(null);
+        return method;
+    }
+
+    private ResultHandle popSetterValue(_ParserContext ctx, Setter setter, BytecodeCreator scope) {
+        if (setter.type.equals(String.class)) {
+            return ctx.popToken(scope);
+        } else if (setter.type.equals(short.class) || setter.type.equals(Short.class)) {
+            return ctx.popShortToken(scope);
+        } else if (setter.type.equals(byte.class) || setter.type.equals(Byte.class)) {
+            return ctx.popByteToken(scope);
+        } else if (setter.type.equals(int.class) || setter.type.equals(Integer.class)) {
+            return ctx.popIntToken(scope);
+        } else if (setter.type.equals(long.class) || setter.type.equals(Long.class)) {
+            return ctx.popLongToken(scope);
+        } else if (setter.type.equals(float.class) || setter.type.equals(Float.class)) {
+            return ctx.popFloatToken(scope);
+        } else if (setter.type.equals(double.class) || setter.type.equals(Double.class)) {
+            return ctx.popDoubleToken(scope);
+        } else if (setter.type.equals(boolean.class) || setter.type.equals(Boolean.class)) {
+            return ctx.popBooleanToken(scope);
+        } else {
+            return ctx.popTarget(scope);
+        }
     }
 
     private String endProperty(Setter setter) {
@@ -319,7 +342,7 @@ public class Deserializer {
 
 
         public ResultHandle popToken(BytecodeCreator scope) {
-            return scope.invokeVirtualMethod(MethodDescriptor.ofMethod(ParserContext.class, "popToken", boolean.class), ctx);
+            return scope.invokeVirtualMethod(MethodDescriptor.ofMethod(ParserContext.class, "popToken", String.class), ctx);
         }
 
 
@@ -331,8 +354,24 @@ public class Deserializer {
             return scope.invokeVirtualMethod(MethodDescriptor.ofMethod(ParserContext.class, "popIntToken", int.class), ctx);
         }
 
+        public ResultHandle popShortToken(BytecodeCreator scope) {
+            return scope.invokeVirtualMethod(MethodDescriptor.ofMethod(ParserContext.class, "popShortToken", short.class), ctx);
+        }
+
+        public ResultHandle popByteToken(BytecodeCreator scope) {
+            return scope.invokeVirtualMethod(MethodDescriptor.ofMethod(ParserContext.class, "popByteToken", byte.class), ctx);
+        }
+
         public ResultHandle popLongToken(BytecodeCreator scope) {
             return scope.invokeVirtualMethod(MethodDescriptor.ofMethod(ParserContext.class, "popLongToken", long.class), ctx);
+        }
+
+        public ResultHandle popFloatToken(BytecodeCreator scope) {
+            return scope.invokeVirtualMethod(MethodDescriptor.ofMethod(ParserContext.class, "popFloatToken", float.class), ctx);
+        }
+
+        public ResultHandle popDoubleToken(BytecodeCreator scope) {
+            return scope.invokeVirtualMethod(MethodDescriptor.ofMethod(ParserContext.class, "popDoubleToken", double.class), ctx);
         }
 
         public ResultHandle target(BytecodeCreator scope) {

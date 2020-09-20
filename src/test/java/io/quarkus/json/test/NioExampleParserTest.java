@@ -381,7 +381,7 @@ public class NioExampleParserTest {
         io.quarkus.json.deserializer.buffered.JsonParser buffered = BufferedPersonParser.PARSER;
         byte[] array = json.getBytes("UTF-8");
         // warm up
-        int ITERATIONS = 1000000;
+        int ITERATIONS = 10000;
         for (int i = 0; i < ITERATIONS; i++) {
             reader.readValue(array);
             parser.parser().parse(array);
@@ -415,16 +415,5 @@ public class NioExampleParserTest {
             reader.readValue(array);
         }
         System.out.println("Jackson took: " + (System.currentTimeMillis() - start) + " (ms)");
-
-
-
-    }
-
-    @Test
-    public void testProfile() throws Exception {
-        for (int i = 0; i < 100000; i++) {
-            NioPersonParser.PARSER.parser().parse(json);
-        }
-
     }
 }
