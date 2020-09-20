@@ -1,17 +1,15 @@
 package io.quarkus.json.test;
 
 import io.quarkus.gizmo.TestClassLoader;
-import io.quarkus.json.deserializer.nio.JsonParser;
-import io.quarkus.json.deserializer.nio.ParserContext;
-import io.quarkus.json.generator.nio.Deserializer;
+import io.quarkus.json.deserializer.buffered.JsonParser;
+import io.quarkus.json.generator.buffered.Deserializer;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class NioDeserializerOutputTest {
+public class BufferedGeneratorTest {
 
     @Test
     public void testDeserializer() throws Exception {
-        Deserializer.create(Simple.class).output(new TestClassOutput()).generate();
         Deserializer.create(Single.class).output(new TestClassOutput()).generate();
     }
 
@@ -31,10 +29,10 @@ public class NioDeserializerOutputTest {
 
         Class deserializer = loader.loadClass(Deserializer.fqn(Single.class, Single.class));
         JsonParser parser = (JsonParser)deserializer.newInstance();
-        ParserContext ctx = parser.parser();
-        Assertions.assertTrue(ctx.parse(simpleJson));
-        Single single = ctx.popTarget();
+        Single single = parser.parser().parse(simpleJson);
         Assertions.assertEquals(1, single.getName());
+
+
     }
     @Test
     public void testSimple() throws Exception {
@@ -43,9 +41,7 @@ public class NioDeserializerOutputTest {
 
         Class deserializer = loader.loadClass(Deserializer.fqn(Simple.class, Simple.class));
         JsonParser parser = (JsonParser)deserializer.newInstance();
-        ParserContext ctx = parser.parser();
-        Assertions.assertTrue(ctx.parse(simpleJson));
-        Simple simple = ctx.popTarget();
+        Simple simple = parser.parser().parse(simpleJson);
         Assertions.assertEquals(1, simple.getName());
         Assertions.assertEquals(2, simple.getAge());
         Assertions.assertEquals(3, simple.getMoney());
@@ -56,5 +52,4 @@ public class NioDeserializerOutputTest {
 
 
     }
-
 }

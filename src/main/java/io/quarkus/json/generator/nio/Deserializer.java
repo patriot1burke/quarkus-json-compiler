@@ -12,7 +12,6 @@ import io.quarkus.gizmo.MethodCreator;
 import io.quarkus.gizmo.MethodDescriptor;
 import io.quarkus.gizmo.ResultHandle;
 import io.quarkus.json.deserializer.nio.BaseParser;
-import io.quarkus.json.deserializer.nio.IntChar;
 import io.quarkus.json.deserializer.nio.ObjectParser;
 import io.quarkus.json.deserializer.nio.ParserContext;
 import io.quarkus.json.deserializer.nio.ParserState;

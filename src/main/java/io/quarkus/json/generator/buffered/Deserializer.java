@@ -10,7 +10,7 @@ import io.quarkus.gizmo.FieldDescriptor;
 import io.quarkus.gizmo.MethodCreator;
 import io.quarkus.gizmo.MethodDescriptor;
 import io.quarkus.gizmo.ResultHandle;
-import io.quarkus.json.deserializer.buffered.IntChar;
+import io.quarkus.json.IntChar;
 import io.quarkus.json.deserializer.buffered.ObjectParser;
 import io.quarkus.json.deserializer.buffered.ParserContext;
 import io.quarkus.json.deserializer.buffered.SkipParser;

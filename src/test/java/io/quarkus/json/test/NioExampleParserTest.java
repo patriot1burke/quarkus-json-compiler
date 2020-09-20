@@ -378,14 +378,14 @@ public class NioExampleParserTest {
                 .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true);
         ObjectReader reader = mapper.readerFor(Person.class);
         JsonParser parser = NioPersonParser.PARSER;
-        io.quarkus.json.deserializer.buffered.JsonParser lexer = BufferedPersonParser.PARSER;
+        io.quarkus.json.deserializer.buffered.JsonParser buffered = BufferedPersonParser.PARSER;
         byte[] array = json.getBytes("UTF-8");
         // warm up
-        int ITERATIONS = 100000;
+        int ITERATIONS = 1000000;
         for (int i = 0; i < ITERATIONS; i++) {
             reader.readValue(array);
             parser.parser().parse(array);
-            lexer.parser().parse(array);
+            buffered.parser().parse(array);
         }
         long start = 0;
         System.gc();
@@ -393,9 +393,9 @@ public class NioExampleParserTest {
 
         start = System.currentTimeMillis();
         for (int i = 0; i < ITERATIONS; i++) {
-            lexer.parser().parse(array);
+            buffered.parser().parse(array);
         }
-        System.out.println("lexer took: " + (System.currentTimeMillis() - start) + " (ms)");
+        System.out.println("buffered took: " + (System.currentTimeMillis() - start) + " (ms)");
 
         System.gc();
         Thread.sleep(100);
@@ -404,7 +404,7 @@ public class NioExampleParserTest {
         for (int i = 0; i < ITERATIONS; i++) {
             parser.parser().parse(array);
         }
-        System.out.println("Generator took: " + (System.currentTimeMillis() - start) + " (ms)");
+        System.out.println("Nio took: " + (System.currentTimeMillis() - start) + " (ms)");
 
         System.gc();
         Thread.sleep(100);

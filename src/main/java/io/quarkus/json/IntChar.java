@@ -1,4 +1,4 @@
-package io.quarkus.json.deserializer.nio;
+package io.quarkus.json;
 
 public class IntChar {
     public final static int INT_TAB = '\t';
@@ -44,9 +44,9 @@ public class IntChar {
     }
 
     public static boolean isWhitespace(int ch) {
-        return ch == IntChar.INT_SPACE
-            || ch == IntChar.INT_LF
-                || ch == IntChar.INT_CR
-                  || ch == IntChar.INT_TAB;
+        return ch == INT_SPACE
+            || ch == INT_LF
+                || ch == INT_CR
+                  || ch == INT_TAB;
     }
 }

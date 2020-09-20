@@ -1,6 +1,6 @@
 package io.quarkus.json.deserializer.buffered;
 
-import static io.quarkus.json.deserializer.buffered.IntChar.*;
+import static io.quarkus.json.IntChar.*;
 
 public class SkipParser implements JsonParser {
     public static final SkipParser PARSER = new SkipParser();

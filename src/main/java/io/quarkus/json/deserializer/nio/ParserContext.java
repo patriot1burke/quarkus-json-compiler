@@ -5,7 +5,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayDeque;
 import java.util.LinkedList;
 
-import static io.quarkus.json.deserializer.nio.IntChar.*;
+import static io.quarkus.json.IntChar.*;
 
 public class ParserContext {
     protected LinkedList<ParserState> state;

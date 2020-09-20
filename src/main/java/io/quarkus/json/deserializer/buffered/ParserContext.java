@@ -2,7 +2,7 @@ package io.quarkus.json.deserializer.buffered;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayDeque;
-import static io.quarkus.json.deserializer.buffered.IntChar.*;
+import static io.quarkus.json.IntChar.*;
 
 public class ParserContext {
     protected ArrayDeque<Object> target = new ArrayDeque<>();
@@ -97,7 +97,7 @@ public class ParserContext {
     public boolean check(String str) {
         for (int i = 0; i < str.length(); i++) {
             int c = consume();
-            if (c == IntChar.INT_QUOTE) {
+            if (c == INT_QUOTE) {
                 rewind();
                 return false;
             }
