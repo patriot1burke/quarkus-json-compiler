@@ -14,6 +14,7 @@ public class NioGeneratorTest {
     public void testDeserializer() throws Exception {
         Deserializer.create(Simple.class).output(new TestClassOutput()).generate();
         Deserializer.create(Single.class).output(new TestClassOutput()).generate();
+        Deserializer.create(Person2.class).output(new TestClassOutput()).generate();
         Serializer.create(Single.class).output(new TestClassOutput()).generate();
     }
 
@@ -55,8 +56,87 @@ public class NioGeneratorTest {
         Assertions.assertEquals(5, simple.getQ());
         Assertions.assertEquals(6, simple.getQq());
         Assertions.assertEquals(7, simple.getQqq());
+    }
 
+    static String json = "{\n" +
+            "  \"intMap\": {\n" +
+            "    \"one\": 1,\n" +
+            "    \"two\": 2\n" +
+            "  },\n" +
+            "  \"name\": \"Bill\",\n" +
+            "  \"age\": 50,\n" +
+            "  \"money\": 123.23,\n" +
+            "  \"married\": true,\n" +
+            "  \"junkInt\": 666,\n" +
+            "  \"pets\": [ \"itchy\", \"scratchy\"],\n" +
+            "  \"junkFloat\": 6.66,\n" +
+            "  \"kids\": {\n" +
+            "    \"Sammy\": {\n" +
+            "      \"name\": \"Sammy\",\n" +
+            "      \"age\": 6\n" +
+            "    },\n" +
+            "    \"Suzi\": {\n" +
+            "      \"name\": \"Suzi\",\n" +
+            "      \"age\": 7\n" +
+            "    }\n" +
+            "  },\n" +
+            "  \"siblings\": [\n" +
+            "    {\n" +
+            "      \"name\": \"Ritchie\"\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"Joani\"\n" +
+            "    }\n" +
+            "  ],\n" +
+            "  \"junkList\": [\"1\", \"2\"]," +
+            "  \"junkBool\": true,\n" +
+            "  \"junkMap\": {\n" +
+            "    \"foo\": \"bar\",\n" +
+            "    \"one\": 1,\n" +
+            "    \"list\": [1, 2, 3, 4]\n" +
+            "  },\n" +
+            "  \"dad\": {\n" +
+            "    \"name\": \"John\",\n" +
+            "    \"married\": true\n" +
+            "  }\n" +
+            "}";
+
+
+    @Test
+    public void testPerson() throws Exception {
+        TestClassLoader loader = new TestClassLoader(Person2.class.getClassLoader());
+        Deserializer.create(Person2.class).output(loader).generate();
+
+        Class deserializer = loader.loadClass(Deserializer.fqn(Person2.class, Person2.class));
+        JsonParser parser = (JsonParser)deserializer.newInstance();
+        ParserContext ctx = parser.parser();
+        Assertions.assertTrue(ctx.parse(json));
+        Person2 person = ctx.target();
+        validatePerson(person);
 
     }
+
+    public void validatePerson(Person2 person) {
+        Assertions.assertEquals("Bill", person.getName());
+        Assertions.assertEquals(50, person.getAge());
+        Assertions.assertTrue(person.isMarried());
+        Assertions.assertEquals(123.23F, person.getMoney());
+        Assertions.assertEquals(1, person.getIntMap().get("one"));
+        Assertions.assertEquals(2, person.getIntMap().get("two"));
+        Assertions.assertEquals("John", person.getDad().getName());
+        Assertions.assertTrue(person.getDad().isMarried());
+        Assertions.assertEquals("Sammy", person.getKids().get("Sammy").getName());
+        Assertions.assertEquals(6, person.getKids().get("Sammy").getAge());
+        Assertions.assertEquals("Suzi", person.getKids().get("Suzi").getName());
+        Assertions.assertEquals(7, person.getKids().get("Suzi").getAge());
+        Assertions.assertEquals("Ritchie", person.getSiblings().get(0).getName());
+        Assertions.assertEquals("Joani", person.getSiblings().get(1).getName());
+        Assertions.assertTrue(person.getPets().contains("itchy"));
+        Assertions.assertTrue(person.getPets().contains("scratchy"));
+    }
+
+
+
+
 
 }

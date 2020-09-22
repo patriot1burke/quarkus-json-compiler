@@ -331,47 +331,6 @@ public class NioExampleParserTest {
 
     }
 
-    static String no_float = "{\n" +
-            "  \"intMap\": {\n" +
-            "    \"one\": 1,\n" +
-            "    \"two\": 2\n" +
-            "  },\n" +
-            "  \"name\": \"Bill\",\n" +
-            "  \"age\": 50,\n" +
-            "  \"married\": true,\n" +
-            "  \"junkInt\": 666,\n" +
-            "  \"pets\": [ \"itchy\", \"scratchy\"],\n" +
-            "  \"kids\": {\n" +
-            "    \"Sammy\": {\n" +
-            "      \"name\": \"Sammy\",\n" +
-            "      \"age\": 6\n" +
-            "    },\n" +
-            "    \"Suzi\": {\n" +
-            "      \"name\": \"Suzi\",\n" +
-            "      \"age\": 7\n" +
-            "    }\n" +
-            "  },\n" +
-            "  \"siblings\": [\n" +
-            "    {\n" +
-            "      \"name\": \"Ritchie\"\n" +
-            "    },\n" +
-            "    {\n" +
-            "      \"name\": \"Joani\"\n" +
-            "    }\n" +
-            "  ],\n" +
-            "  \"junkList\": [\"1\", \"2\"]," +
-            "  \"junkBool\": true,\n" +
-            "  \"junkMap\": {\n" +
-            "    \"foo\": \"bar\",\n" +
-            "    \"one\": 1,\n" +
-            "    \"list\": [1, 2, 3, 4]\n" +
-            "  },\n" +
-            "  \"dad\": {\n" +
-            "    \"name\": \"John\",\n" +
-            "    \"married\": true\n" +
-            "  }\n" +
-            "}";
-
     @Test
     public void testVsJackson() throws Exception {
         ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)

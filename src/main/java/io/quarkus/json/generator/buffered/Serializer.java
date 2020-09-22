@@ -1,27 +1,18 @@
 package io.quarkus.json.generator.buffered;
 
 import io.quarkus.gizmo.AssignableResultHandle;
-import io.quarkus.gizmo.BranchResult;
-import io.quarkus.gizmo.BytecodeCreator;
 import io.quarkus.gizmo.ClassCreator;
 import io.quarkus.gizmo.ClassOutput;
 import io.quarkus.gizmo.FieldCreator;
-import io.quarkus.gizmo.FieldDescriptor;
 import io.quarkus.gizmo.MethodCreator;
 import io.quarkus.gizmo.MethodDescriptor;
 import io.quarkus.gizmo.ResultHandle;
-import io.quarkus.json.IntChar;
-import io.quarkus.json.deserializer.buffered.ObjectParser;
-import io.quarkus.json.deserializer.buffered.SkipParser;
-import io.quarkus.json.deserializer.nio.ParserContext;
-import io.quarkus.json.serializer.Types;
 import io.quarkus.json.serializer.bio.JsonWriter;
 import io.quarkus.json.serializer.bio.ObjectWriter;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
