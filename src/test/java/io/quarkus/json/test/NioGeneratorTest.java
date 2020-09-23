@@ -129,7 +129,15 @@ public class NioGeneratorTest {
         ObjectWriter objectWriter = (ObjectWriter)serializer.newInstance();
         jsonWriter.write(person, objectWriter);
 
-        System.out.println(new String(writer.getBytes(), JsonByteWriter.UTF8));
+        byte[] bytes = writer.getBytes();
+        System.out.println(new String(bytes, JsonByteWriter.UTF8));
+
+        // validate serializer
+
+        ctx = parser.parser();
+        Assertions.assertTrue(ctx.parse(bytes));
+        person = ctx.target();
+        validatePerson(person);
 
 
     }

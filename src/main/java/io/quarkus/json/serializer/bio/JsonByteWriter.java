@@ -20,11 +20,6 @@ public class JsonByteWriter implements JsonWriter {
     }
 
     @Override
-    public void writeComma() {
-        writer.write(IntChar.INT_COMMA);
-    }
-
-    @Override
     public void write(short val) {
         write((long)val);
     }
@@ -145,144 +140,173 @@ public class JsonByteWriter implements JsonWriter {
     }
 
     @Override
-    public void writeProperty(String name, char val) {
+    public void writeProperty(String name, char val, boolean comma) {
+        if (comma) writer.write(IntChar.INT_COMMA);
         write(name);
         writer.write(IntChar.INT_COLON);
         write(val);
     }
 
     @Override
-    public void writeProperty(String name, short val) {
+    public void writeProperty(String name, short val, boolean comma) {
+        if (comma) writer.write(IntChar.INT_COMMA);
         write(name);
         writer.write(IntChar.INT_COLON);
         write(val);
     }
 
     @Override
-    public void writeProperty(String name, int val) {
+    public void writeProperty(String name, int val, boolean comma) {
+        if (comma) writer.write(IntChar.INT_COMMA);
         write(name);
         writer.write(IntChar.INT_COLON);
         write(val);
     }
 
     @Override
-    public void writeProperty(String name, long val) {
+    public void writeProperty(String name, long val, boolean comma) {
+        if (comma) writer.write(IntChar.INT_COMMA);
         write(name);
         writer.write(IntChar.INT_COLON);
         write(val);
     }
 
     @Override
-    public void writeProperty(String name, boolean val) {
+    public void writeProperty(String name, boolean val, boolean comma) {
+        if (comma) writer.write(IntChar.INT_COMMA);
         write(name);
         writer.write(IntChar.INT_COLON);
         write(val);
     }
 
     @Override
-    public void writeProperty(String name, byte val) {
+    public void writeProperty(String name, byte val, boolean comma) {
+        if (comma) writer.write(IntChar.INT_COMMA);
         write(name);
         writer.write(IntChar.INT_COLON);
         write(val);
     }
 
     @Override
-    public void writeProperty(String name, float val) {
+    public void writeProperty(String name, float val, boolean comma) {
+        if (comma) writer.write(IntChar.INT_COMMA);
         write(name);
         writer.write(IntChar.INT_COLON);
         write(val);
     }
 
     @Override
-    public void writeProperty(String name, double val) {
+    public void writeProperty(String name, double val, boolean comma) {
+        if (comma) writer.write(IntChar.INT_COMMA);
         write(name);
         writer.write(IntChar.INT_COLON);
         write(val);
     }
 
     @Override
-    public void writeProperty(String name, Character val) {
-        if (val == null) return;
+    public boolean writeProperty(String name, Character val, boolean comma) {
+        if (val == null) return comma;
+        if (comma) writer.write(IntChar.INT_COMMA);
         write(name);
         writer.write(IntChar.INT_COLON);
         write(val);
+        return true;
     }
 
     @Override
-    public void writeProperty(String name, Short val) {
-        if (val == null) return;
+    public boolean writeProperty(String name, Short val, boolean comma) {
+        if (val == null) return comma;
+        if (comma) writer.write(IntChar.INT_COMMA);
         write(name);
         writer.write(IntChar.INT_COLON);
         write(val);
+        return true;
     }
 
     @Override
-    public void writeProperty(String name, Integer val) {
-        if (val == null) return;
+    public boolean writeProperty(String name, Integer val, boolean comma) {
+        if (val == null) return comma;
+        if (comma) writer.write(IntChar.INT_COMMA);
         write(name);
         writer.write(IntChar.INT_COLON);
         write(val);
+        return true;
     }
 
     @Override
-    public void writeProperty(String name, Long val) {
-        if (val == null) return;
+    public boolean writeProperty(String name, Long val, boolean comma) {
+        if (val == null) return comma;
+        if (comma) writer.write(IntChar.INT_COMMA);
         write(name);
         writer.write(IntChar.INT_COLON);
         write(val);
+        return true;
     }
 
     @Override
-    public void writeProperty(String name, Boolean val) {
-        if (val == null) return;
+    public boolean writeProperty(String name, Boolean val, boolean comma) {
+        if (val == null) return comma;
+        if (comma) writer.write(IntChar.INT_COMMA);
         write(name);
         writer.write(IntChar.INT_COLON);
         write(val);
+        return true;
     }
 
     @Override
-    public void writeProperty(String name, Byte val) {
-        if (val == null) return;
+    public boolean writeProperty(String name, Byte val, boolean comma) {
+        if (val == null) return comma;
+        if (comma) writer.write(IntChar.INT_COMMA);
         write(name);
         writer.write(IntChar.INT_COLON);
         write(val);
+        return true;
     }
 
     @Override
-    public void writeProperty(String name, Float val) {
-        if (val == null) return;
+    public boolean writeProperty(String name, Float val, boolean comma) {
+        if (val == null) return comma;
+        if (comma) writer.write(IntChar.INT_COMMA);
         write(name);
         writer.write(IntChar.INT_COLON);
         write(val);
+        return true;
     }
 
     @Override
-    public void writeProperty(String name, Double val) {
-        if (val == null) return;
+    public boolean writeProperty(String name, Double val, boolean comma) {
+        if (val == null) return comma;
+        if (comma) writer.write(IntChar.INT_COMMA);
         write(name);
         writer.write(IntChar.INT_COLON);
         write(val);
+        return true;
     }
 
     @Override
-    public void writeProperty(String name, String val) {
-        if (val == null) return;
+    public boolean writeProperty(String name, String val, boolean comma) {
+        if (val == null) return comma;
+        if (comma) writer.write(IntChar.INT_COMMA);
         write(name);
         writer.write(IntChar.INT_COLON);
         write(val);
+        return true;
     }
 
     @Override
-    public void writeProperty(String name, Object val, ObjectWriter writer) {
-        if (val == null) return;
+    public boolean writeProperty(String name, Object val, ObjectWriter writer, boolean comma) {
+        if (val == null) return comma;
+        if (comma) this.writer.write(IntChar.INT_COMMA);
         write(name);
         this.writer.write(IntChar.INT_COLON);
         write(val, writer);
+        return true;
     }
 
     @Override
-    public void writeProperty(String name, Map val) {
-        if (val == null) return;
+    public boolean writeProperty(String name, Map val, boolean comma) {
+        if (val == null) return comma;
+        if (comma) writer.write(IntChar.INT_COMMA);
         write(name);
         writer.write(IntChar.INT_COLON);
         writer.write(IntChar.INT_LCURLY);
@@ -296,7 +320,7 @@ public class JsonByteWriter implements JsonWriter {
             writePropertyValue(entry.getValue());
         }
         writer.write(IntChar.INT_RCURLY);
-
+        return true;
     }
 
     private void writePropertyName(Object obj) {
@@ -397,8 +421,9 @@ public class JsonByteWriter implements JsonWriter {
 
 
     @Override
-    public void writeProperty(String name, Collection val) {
-        if (val == null) return;
+    public boolean writeProperty(String name, Collection val, boolean comma) {
+        if (val == null) return comma;
+        if (comma) writer.write(IntChar.INT_COMMA);
         write(name);
         writer.write(IntChar.INT_COLON);
         writer.write(IntChar.INT_LBRACKET);
@@ -409,12 +434,13 @@ public class JsonByteWriter implements JsonWriter {
             writePropertyValue(item);
         }
         writer.write(IntChar.INT_RBRACKET);
-
+        return true;
     }
 
     @Override
-    public void writeProperty(String name, Map val, ObjectWriter objectWriter) {
-        if (val == null) return;
+    public boolean writeProperty(String name, Map val, ObjectWriter objectWriter, boolean comma) {
+        if (val == null) return comma;
+        if (comma) writer.write(IntChar.INT_COMMA);
         write(name);
         writer.write(IntChar.INT_COLON);
         writer.write(IntChar.INT_LCURLY);
@@ -428,11 +454,13 @@ public class JsonByteWriter implements JsonWriter {
             write(entry.getValue(), objectWriter);
         }
         writer.write(IntChar.INT_RCURLY);
+        return true;
     }
 
     @Override
-    public void writeProperty(String name, Collection val, ObjectWriter objectWriter) {
-        if (val == null) return;
+    public boolean writeProperty(String name, Collection val, ObjectWriter objectWriter, boolean comma) {
+        if (val == null) return comma;
+        if (comma) writer.write(IntChar.INT_COMMA);
         write(name);
         writer.write(IntChar.INT_COLON);
         writer.write(IntChar.INT_LBRACKET);
@@ -443,5 +471,6 @@ public class JsonByteWriter implements JsonWriter {
             write(item, objectWriter);
         }
         writer.write(IntChar.INT_RBRACKET);
+        return true;
     }
 }
