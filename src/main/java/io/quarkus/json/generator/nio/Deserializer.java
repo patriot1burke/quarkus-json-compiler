@@ -14,6 +14,8 @@ import io.quarkus.gizmo.ResultHandle;
 import io.quarkus.json.deserializer.nio.BaseParser;
 import io.quarkus.json.deserializer.nio.CollectionParser;
 import io.quarkus.json.deserializer.nio.ContextValue;
+import io.quarkus.json.deserializer.nio.GenericParser;
+import io.quarkus.json.deserializer.nio.GenericSetParser;
 import io.quarkus.json.deserializer.nio.MapParser;
 import io.quarkus.json.deserializer.nio.ObjectParser;
 import io.quarkus.json.deserializer.nio.ParserContext;
@@ -468,9 +470,14 @@ public class Deserializer {
                 FieldDescriptor mapFieldDesc = FieldDescriptor.of(fqn(type, genericType), setter.property, CollectionParser.class);
                 ResultHandle mapField = scope.readStaticField(mapFieldDesc);
                 return scope.readInstanceField(FieldDescriptor.of(CollectionParser.class, "continueStart", ParserState.class), mapField);
+            } else if (List.class.isAssignableFrom(setter.type)) {
+                FieldDescriptor parserField = FieldDescriptor.of(GenericParser.class, "PARSER", GenericParser.class);
+                ResultHandle PARSER = scope.readStaticField(parserField);
+                return scope.readInstanceField(FieldDescriptor.of(GenericParser.class, "continueStartObject", ParserState.class), PARSER);
             } else {
-                // generic
-                throw new RuntimeException("generic not supported yet");
+                FieldDescriptor parserField = FieldDescriptor.of(GenericSetParser.class, "PARSER", GenericSetParser.class);
+                ResultHandle PARSER = scope.readStaticField(parserField);
+                return scope.readInstanceField(FieldDescriptor.of(GenericSetParser.class, "continueStartObject", ParserState.class), PARSER);
             }
         } else if (Map.class.isAssignableFrom(setter.type)) {
             if (setter.genericType instanceof ParameterizedType) {
@@ -478,12 +485,14 @@ public class Deserializer {
                 ResultHandle mapField = scope.readStaticField(mapFieldDesc);
                 return scope.readInstanceField(FieldDescriptor.of(MapParser.class, "continueStart", ParserState.class), mapField);
             } else {
-                // generic
-                throw new RuntimeException("generic not supported yet");
+                FieldDescriptor parserField = FieldDescriptor.of(GenericParser.class, "PARSER", GenericParser.class);
+                ResultHandle PARSER = scope.readStaticField(parserField);
+                return scope.readInstanceField(FieldDescriptor.of(GenericParser.class, "continueStartObject", ParserState.class), PARSER);
             }
         } else if (setter.type.equals(Object.class)) {
-            // pure generic
-            throw new RuntimeException("generic not supported yet");
+            FieldDescriptor parserField = FieldDescriptor.of(GenericParser.class, "PARSER", GenericParser.class);
+            ResultHandle PARSER = scope.readStaticField(parserField);
+            return scope.readInstanceField(FieldDescriptor.of(GenericParser.class, "continueStart", ParserState.class), PARSER);
         } else {
             // todo handle nested collections and maps
             FieldDescriptor parserField = FieldDescriptor.of(fqn(type, genericType), "PARSER", fqn(type, genericType));
@@ -525,9 +534,16 @@ public class Deserializer {
                 return scope.invokeVirtualMethod(descriptor,
                         scope.readStaticField(FieldDescriptor.of(fqn(), setter.property, CollectionParser.class)),
                         ctx.ctx);
+            } else if (List.class.isAssignableFrom(setter.type)) {
+                FieldDescriptor parserField = FieldDescriptor.of(GenericParser.class, "PARSER", GenericParser.class);
+                ResultHandle PARSER = scope.readStaticField(parserField);
+                MethodDescriptor descriptor = MethodDescriptor.ofMethod(GenericParser.class, "startList", boolean.class, ParserContext.class);
+                return scope.invokeVirtualMethod(descriptor, PARSER, ctx.ctx);
             } else {
-                // generic
-                throw new RuntimeException("generic not supported yet");
+                FieldDescriptor parserField = FieldDescriptor.of(GenericSetParser.class, "PARSER", GenericParser.class);
+                ResultHandle PARSER = scope.readStaticField(parserField);
+                MethodDescriptor descriptor = MethodDescriptor.ofMethod(GenericSetParser.class, "startList", boolean.class, ParserContext.class);
+                return scope.invokeVirtualMethod(descriptor, PARSER, ctx.ctx);
             }
         } else if (Map.class.isAssignableFrom(setter.type)) {
             if (setter.genericType instanceof ParameterizedType) {
@@ -537,12 +553,16 @@ public class Deserializer {
                         scope.readStaticField(FieldDescriptor.of(fqn(), setter.property, MapParser.class)),
                         ctx.ctx);
             } else {
-                // generic
-                throw new RuntimeException("generic not supported yet");
+                FieldDescriptor parserField = FieldDescriptor.of(GenericParser.class, "PARSER", GenericParser.class);
+                ResultHandle PARSER = scope.readStaticField(parserField);
+                MethodDescriptor descriptor = MethodDescriptor.ofMethod(GenericParser.class, "startObject", boolean.class, ParserContext.class);
+                return scope.invokeVirtualMethod(descriptor, PARSER, ctx.ctx);
             }
         } else if (setter.type.equals(Object.class)) {
-            // pure generic
-            throw new RuntimeException("generic not supported yet");
+            FieldDescriptor parserField = FieldDescriptor.of(GenericParser.class, "PARSER", GenericParser.class);
+            ResultHandle PARSER = scope.readStaticField(parserField);
+            MethodDescriptor descriptor = MethodDescriptor.ofMethod(GenericParser.class, "start", boolean.class, ParserContext.class);
+            return scope.invokeVirtualMethod(descriptor, PARSER, ctx.ctx);
         } else {
             FieldDescriptor parserField = FieldDescriptor.of(fqn(type, genericType), "PARSER", fqn(type, genericType));
             ResultHandle PARSER = scope.readStaticField(parserField);

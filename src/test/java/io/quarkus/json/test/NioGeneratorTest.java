@@ -69,6 +69,14 @@ public class NioGeneratorTest {
             "    \"one\": 1,\n" +
             "    \"two\": 2\n" +
             "  },\n" +
+            "  \"genericMap\": {\n" +
+            "    \"three\": 3,\n" +
+            "    \"four\": 4\n" +
+            "  },\n" +
+            "  \"genericList\": [\n" +
+            "    \"a\",\n" +
+            "    \"b\"\n" +
+            "  ],\n" +
             "  \"name\": \"Bill\",\n" +
             "  \"age\": 50,\n" +
             "  \"money\": 123.23,\n" +
@@ -149,6 +157,10 @@ public class NioGeneratorTest {
         Assertions.assertEquals(123.23F, person.getMoney());
         Assertions.assertEquals(1, person.getIntMap().get("one"));
         Assertions.assertEquals(2, person.getIntMap().get("two"));
+        Assertions.assertEquals("a", person.getGenericList().get(0));
+        Assertions.assertEquals("b", person.getGenericList().get(1));
+        Assertions.assertEquals(3l, person.getGenericMap().get("three"));
+        Assertions.assertEquals(4l, person.getGenericMap().get("four"));
         Assertions.assertEquals("John", person.getDad().getName());
         Assertions.assertTrue(person.getDad().isMarried());
         Assertions.assertEquals("Sammy", person.getKids().get("Sammy").getName());

@@ -64,7 +64,7 @@ public class BaseParser implements JsonParser {
             return false;
         }
         if (c == INT_LBRACKET) {
-            beginObject(ctx);
+            beginList(ctx);
             return loopListValues(ctx);
         } else {
             throw new RuntimeException("Expecting start of array");

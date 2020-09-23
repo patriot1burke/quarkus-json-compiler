@@ -2,6 +2,7 @@ package io.quarkus.json.test;
 
 import io.quarkus.json.deserializer.nio.CollectionParser;
 import io.quarkus.json.deserializer.nio.ContextValue;
+import io.quarkus.json.deserializer.nio.GenericParser;
 import io.quarkus.json.deserializer.nio.MapParser;
 import io.quarkus.json.deserializer.nio.ObjectParser;
 import io.quarkus.json.deserializer.nio.ParserContext;
@@ -54,6 +55,20 @@ public class NioPersonParser extends ObjectParser {
                     }
                     if (!startIntegerValue(ctx)) {
                         ctx.pushState(ageEnd, stateIndex);
+                        return false;
+                    }
+                    return ageEnd(ctx);
+                }
+                break;
+            case 'g':
+                if (ctx.compareToken(index, "enericMap")) {
+                    if (!valueSeparator(ctx)) {
+                        ctx.pushState(GenericParser.PARSER.continueStartObject, stateIndex);
+                        ctx.pushState(genericMapEnd, stateIndex);
+                        return false;
+                    }
+                    if (!GenericParser.PARSER.startObject(ctx)) {
+                        ctx.pushState(genericMapEnd, stateIndex);
                         return false;
                     }
                     return ageEnd(ctx);
@@ -285,6 +300,17 @@ public class NioPersonParser extends ObjectParser {
         int value = ctx.popIntToken();
         Person person = ctx.target();
         person.setAge(value);
+        return true;
+    }
+    static final ParserState genericMapEnd = (ctx) -> {
+        ctx.popState();
+        return genericMapEnd(ctx);
+    };
+
+    private static final boolean genericMapEnd(ParserContext ctx) {
+        Map value = ctx.popTarget();
+        Person person = ctx.target();
+        person.setGenericMap(value);
         return true;
     }
 }

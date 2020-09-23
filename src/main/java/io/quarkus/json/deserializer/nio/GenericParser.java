@@ -1,5 +1,6 @@
 package io.quarkus.json.deserializer.nio;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -44,7 +45,7 @@ public class GenericParser extends BaseParser implements JsonParser {
     @Override
     public void addListValue(ParserContext ctx) {
         Object val = ctx.popTarget();
-        List list = ctx.target();
+        Collection list = ctx.target();
         list.add(val);
     }
 

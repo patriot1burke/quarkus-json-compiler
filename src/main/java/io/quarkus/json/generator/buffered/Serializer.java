@@ -272,7 +272,7 @@ public class Serializer {
             } else if (Collection.class.isAssignableFrom(getter.type)) {
                 Class valueType = null;
                 if (getter.genericType instanceof ParameterizedType) {
-                    ParameterizedType pt = (ParameterizedType)getter.genericType;
+                    ParameterizedType pt = (ParameterizedType) getter.genericType;
                     valueType = Types.getRawType(pt.getActualTypeArguments()[0]);
                 }
                 if (valueType == null || !isUserObject(valueType)) {
@@ -291,6 +291,12 @@ public class Serializer {
                     );
                     if (!forceComma) method.assign(comma, result);
                 }
+            } else if (getter.type.equals(Object.class)) {
+                ResultHandle result = method.invokeInterfaceMethod(MethodDescriptor.ofMethod(JsonWriter.class, "writeObjectProperty", boolean.class, String.class, Object.class, boolean.class), jsonWriter,
+                        method.load(getter.name),
+                        method.invokeVirtualMethod(MethodDescriptor.ofMethod(targetType, getter.method.getName(), getter.type), target),
+                        comma);
+                if (!forceComma) method.assign(comma, result);
             } else {
                 needed.put(getter.type, getter.genericType);
                 ResultHandle result = method.invokeInterfaceMethod(MethodDescriptor.ofMethod(JsonWriter.class, "writeProperty", boolean.class, String.class, Object.class, ObjectWriter.class, boolean.class), jsonWriter,

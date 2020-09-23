@@ -13,12 +13,9 @@ public class Person2 {
     private Map<String, Person2> kids;
     private List<Person2> siblings;
     private List<String> pets;
-/*
     private Map genericMap;
     private Object genericBag;
     private List genericList;
-
-     */
 
     public String getName() {
         return name;
@@ -90,5 +87,29 @@ public class Person2 {
 
     public void setPets(List<String> pets) {
         this.pets = pets;
+    }
+
+    public Map getGenericMap() {
+        return genericMap;
+    }
+
+    public void setGenericMap(Map genericMap) {
+        this.genericMap = genericMap;
+    }
+
+    public Object getGenericBag() {
+        return genericBag;
+    }
+
+    public void setGenericBag(Object genericBag) {
+        this.genericBag = genericBag;
+    }
+
+    public List getGenericList() {
+        return genericList;
+    }
+
+    public void setGenericList(List genericList) {
+        this.genericList = genericList;
     }
 }

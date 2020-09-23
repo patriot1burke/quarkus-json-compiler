@@ -26,6 +26,10 @@ public class NioExampleParserTest {
             "    \"one\": 1,\n" +
             "    \"two\": 2\n" +
             "  },\n" +
+            "  \"genericMap\": {\n" +
+            "    \"three\": 3,\n" +
+            "    \"four\": 4\n" +
+            "  },\n" +
             "  \"name\": \"Bill\",\n" +
             "  \"age\": 50,\n" +
             "  \"money\": 123.23,\n" +
@@ -64,40 +68,6 @@ public class NioExampleParserTest {
             "  }\n" +
             "}";
 
-
-    static String no_junk = "{\n" +
-            "  \"intMap\": {\n" +
-            "    \"one\": 1,\n" +
-            "    \"two\": 2\n" +
-            "  },\n" +
-            "  \"name\": \"Bill\",\n" +
-            "  \"age\": 50,\n" +
-            "  \"money\": 123.23,\n" +
-            "  \"married\": true,\n" +
-            "  \"pets\": [ \"itchy\", \"scratchy\"],\n" +
-            "  \"kids\": {\n" +
-            "    \"Sammy\": {\n" +
-            "      \"name\": \"Sammy\",\n" +
-            "      \"age\": 6\n" +
-            "    },\n" +
-            "    \"Suzi\": {\n" +
-            "      \"name\": \"Suzi\",\n" +
-            "      \"age\": 7\n" +
-            "    }\n" +
-            "  },\n" +
-            "  \"siblings\": [\n" +
-            "    {\n" +
-            "      \"name\": \"Ritchie\"\n" +
-            "    },\n" +
-            "    {\n" +
-            "      \"name\": \"Joani\"\n" +
-            "    }\n" +
-            "  ],\n" +
-            "  \"dad\": {\n" +
-            "    \"name\": \"John\",\n" +
-            "    \"married\": true\n" +
-            "  }\n" +
-            "}";
 
     static String arrayOnly = "{\n" +
             "  \"pets\": [ \"itchy\", \"scratchy\"]\n" +
@@ -218,6 +188,8 @@ public class NioExampleParserTest {
         Assertions.assertEquals(123.23F, person.getMoney());
         Assertions.assertEquals(1, person.getIntMap().get("one"));
         Assertions.assertEquals(2, person.getIntMap().get("two"));
+        Assertions.assertEquals(3l, person.getGenericMap().get("three"));
+        Assertions.assertEquals(4l, person.getGenericMap().get("four"));
         Assertions.assertEquals("John", person.getDad().getName());
         Assertions.assertTrue(person.getDad().isMarried());
         Assertions.assertEquals("Sammy", person.getKids().get("Sammy").getName());
