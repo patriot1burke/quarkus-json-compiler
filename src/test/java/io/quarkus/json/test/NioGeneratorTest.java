@@ -5,8 +5,13 @@ import io.quarkus.json.deserializer.nio.JsonParser;
 import io.quarkus.json.deserializer.nio.ParserContext;
 import io.quarkus.json.generator.buffered.Serializer;
 import io.quarkus.json.generator.nio.Deserializer;
+import io.quarkus.json.serializer.bio.ByteArrayByteWriter;
+import io.quarkus.json.serializer.bio.JsonByteWriter;
+import io.quarkus.json.serializer.bio.ObjectWriter;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
+import java.nio.charset.Charset;
 
 public class NioGeneratorTest {
 
@@ -16,6 +21,7 @@ public class NioGeneratorTest {
         Deserializer.create(Single.class).output(new TestClassOutput()).generate();
         Deserializer.create(Person2.class).output(new TestClassOutput()).generate();
         Serializer.create(Single.class).output(new TestClassOutput()).generate();
+        Serializer.create(Person2.class).output(new TestClassOutput()).generate();
     }
 
     static String simpleJson = "{\n" +
@@ -106,6 +112,7 @@ public class NioGeneratorTest {
     public void testPerson() throws Exception {
         TestClassLoader loader = new TestClassLoader(Person2.class.getClassLoader());
         Deserializer.create(Person2.class).output(loader).generate();
+        Serializer.create(Person2.class).output(loader).generate();
 
         Class deserializer = loader.loadClass(Deserializer.fqn(Person2.class, Person2.class));
         JsonParser parser = (JsonParser)deserializer.newInstance();
@@ -113,6 +120,17 @@ public class NioGeneratorTest {
         Assertions.assertTrue(ctx.parse(json));
         Person2 person = ctx.target();
         validatePerson(person);
+
+        // serializer
+
+        ByteArrayByteWriter writer = new ByteArrayByteWriter();
+        JsonByteWriter jsonWriter = new JsonByteWriter(writer);
+        Class serializer = loader.loadClass(Serializer.fqn(Person2.class, Person2.class));
+        ObjectWriter objectWriter = (ObjectWriter)serializer.newInstance();
+        jsonWriter.write(person, objectWriter);
+
+        System.out.println(new String(writer.getBytes(), JsonByteWriter.UTF8));
+
 
     }
 
@@ -134,9 +152,4 @@ public class NioGeneratorTest {
         Assertions.assertTrue(person.getPets().contains("itchy"));
         Assertions.assertTrue(person.getPets().contains("scratchy"));
     }
-
-
-
-
-
 }

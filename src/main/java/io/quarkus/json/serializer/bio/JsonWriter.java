@@ -1,8 +1,7 @@
 package io.quarkus.json.serializer.bio;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 
 public interface JsonWriter {
     void writeComma();
@@ -47,9 +46,7 @@ public interface JsonWriter {
 
 
     void writeProperty(String name, Map map);
-    void writeProperty(String name, List list);
-    void writeProperty(String name, Set set);
+    void writeProperty(String name, Collection list);
     void writeProperty(String name, Map map, ObjectWriter writer);
-    void writeProperty(String name, List list, ObjectWriter writer);
-    void writeProperty(String name, Set set, ObjectWriter writer);
+    void writeProperty(String name, Collection list, ObjectWriter writer);
 }

@@ -3,7 +3,7 @@ package io.quarkus.json.serializer.bio;
 import io.quarkus.json.IntChar;
 
 import java.nio.charset.Charset;
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
@@ -13,7 +13,7 @@ public class JsonByteWriter implements JsonWriter {
     static final byte[] TRUE = {'t', 'r', 'u', 'e'};
     static final byte[] FALSE = {'f', 'a', 'l', 's', 'e'};
 
-    static Charset UTF8 = Charset.forName("UTF-8");
+    public static Charset UTF8 = Charset.forName("UTF-8");
 
     public JsonByteWriter(ByteWriter writer) {
         this.writer = writer;
@@ -139,64 +139,64 @@ public class JsonByteWriter implements JsonWriter {
 
     @Override
     public void write(Object val, ObjectWriter writer) {
-        write(IntChar.INT_LCURLY);
+        this.writer.write(IntChar.INT_LCURLY);
         writer.write(this, val);
-        write(IntChar.INT_RCURLY);
+        this.writer.write(IntChar.INT_RCURLY);
     }
 
     @Override
     public void writeProperty(String name, char val) {
         write(name);
-        write(IntChar.INT_COLON);
+        writer.write(IntChar.INT_COLON);
         write(val);
     }
 
     @Override
     public void writeProperty(String name, short val) {
         write(name);
-        write(IntChar.INT_COLON);
+        writer.write(IntChar.INT_COLON);
         write(val);
     }
 
     @Override
     public void writeProperty(String name, int val) {
         write(name);
-        write(IntChar.INT_COLON);
+        writer.write(IntChar.INT_COLON);
         write(val);
     }
 
     @Override
     public void writeProperty(String name, long val) {
         write(name);
-        write(IntChar.INT_COLON);
+        writer.write(IntChar.INT_COLON);
         write(val);
     }
 
     @Override
     public void writeProperty(String name, boolean val) {
         write(name);
-        write(IntChar.INT_COLON);
+        writer.write(IntChar.INT_COLON);
         write(val);
     }
 
     @Override
     public void writeProperty(String name, byte val) {
         write(name);
-        write(IntChar.INT_COLON);
+        writer.write(IntChar.INT_COLON);
         write(val);
     }
 
     @Override
     public void writeProperty(String name, float val) {
         write(name);
-        write(IntChar.INT_COLON);
+        writer.write(IntChar.INT_COLON);
         write(val);
     }
 
     @Override
     public void writeProperty(String name, double val) {
         write(name);
-        write(IntChar.INT_COLON);
+        writer.write(IntChar.INT_COLON);
         write(val);
     }
 
@@ -204,7 +204,7 @@ public class JsonByteWriter implements JsonWriter {
     public void writeProperty(String name, Character val) {
         if (val == null) return;
         write(name);
-        write(IntChar.INT_COLON);
+        writer.write(IntChar.INT_COLON);
         write(val);
     }
 
@@ -212,7 +212,7 @@ public class JsonByteWriter implements JsonWriter {
     public void writeProperty(String name, Short val) {
         if (val == null) return;
         write(name);
-        write(IntChar.INT_COLON);
+        writer.write(IntChar.INT_COLON);
         write(val);
     }
 
@@ -220,7 +220,7 @@ public class JsonByteWriter implements JsonWriter {
     public void writeProperty(String name, Integer val) {
         if (val == null) return;
         write(name);
-        write(IntChar.INT_COLON);
+        writer.write(IntChar.INT_COLON);
         write(val);
     }
 
@@ -228,7 +228,7 @@ public class JsonByteWriter implements JsonWriter {
     public void writeProperty(String name, Long val) {
         if (val == null) return;
         write(name);
-        write(IntChar.INT_COLON);
+        writer.write(IntChar.INT_COLON);
         write(val);
     }
 
@@ -236,7 +236,7 @@ public class JsonByteWriter implements JsonWriter {
     public void writeProperty(String name, Boolean val) {
         if (val == null) return;
         write(name);
-        write(IntChar.INT_COLON);
+        writer.write(IntChar.INT_COLON);
         write(val);
     }
 
@@ -244,7 +244,7 @@ public class JsonByteWriter implements JsonWriter {
     public void writeProperty(String name, Byte val) {
         if (val == null) return;
         write(name);
-        write(IntChar.INT_COLON);
+        writer.write(IntChar.INT_COLON);
         write(val);
     }
 
@@ -252,7 +252,7 @@ public class JsonByteWriter implements JsonWriter {
     public void writeProperty(String name, Float val) {
         if (val == null) return;
         write(name);
-        write(IntChar.INT_COLON);
+        writer.write(IntChar.INT_COLON);
         write(val);
     }
 
@@ -260,7 +260,7 @@ public class JsonByteWriter implements JsonWriter {
     public void writeProperty(String name, Double val) {
         if (val == null) return;
         write(name);
-        write(IntChar.INT_COLON);
+        writer.write(IntChar.INT_COLON);
         write(val);
     }
 
@@ -268,7 +268,7 @@ public class JsonByteWriter implements JsonWriter {
     public void writeProperty(String name, String val) {
         if (val == null) return;
         write(name);
-        write(IntChar.INT_COLON);
+        writer.write(IntChar.INT_COLON);
         write(val);
     }
 
@@ -276,7 +276,7 @@ public class JsonByteWriter implements JsonWriter {
     public void writeProperty(String name, Object val, ObjectWriter writer) {
         if (val == null) return;
         write(name);
-        write(IntChar.INT_COLON);
+        this.writer.write(IntChar.INT_COLON);
         write(val, writer);
     }
 
@@ -284,18 +284,18 @@ public class JsonByteWriter implements JsonWriter {
     public void writeProperty(String name, Map val) {
         if (val == null) return;
         write(name);
-        write(IntChar.INT_COLON);
-        write(IntChar.INT_LCURLY);
+        writer.write(IntChar.INT_COLON);
+        writer.write(IntChar.INT_LCURLY);
         Set<Map.Entry<Object, Object>> set = val.entrySet();
         boolean first = true;
         for (Map.Entry<Object, Object> entry : set) {
             if (first) first = false;
             else writer.write(IntChar.INT_COMMA);
             writePropertyName(entry.getKey());
-            write(IntChar.INT_COLON);
+            writer.write(IntChar.INT_COLON);
             writePropertyValue(entry.getValue());
         }
-        write(IntChar.INT_RCURLY);
+        writer.write(IntChar.INT_RCURLY);
 
     }
 
@@ -397,34 +397,18 @@ public class JsonByteWriter implements JsonWriter {
 
 
     @Override
-    public void writeProperty(String name, List val) {
+    public void writeProperty(String name, Collection val) {
         if (val == null) return;
         write(name);
-        write(IntChar.INT_COLON);
-        write(IntChar.INT_LBRACKET);
+        writer.write(IntChar.INT_COLON);
+        writer.write(IntChar.INT_LBRACKET);
         boolean first = true;
         for (Object item : val) {
             if (first) first = false;
             else writer.write(IntChar.INT_COMMA);
             writePropertyValue(item);
         }
-        write(IntChar.INT_RBRACKET);
-
-    }
-
-    @Override
-    public void writeProperty(String name, Set val) {
-        if (val == null) return;
-        write(name);
-        write(IntChar.INT_COLON);
-        write(IntChar.INT_LBRACKET);
-        boolean first = true;
-        for (Object item : val) {
-            if (first) first = false;
-            else writer.write(IntChar.INT_COMMA);
-            writePropertyValue(item);
-        }
-        write(IntChar.INT_RBRACKET);
+        writer.write(IntChar.INT_RBRACKET);
 
     }
 
@@ -432,49 +416,32 @@ public class JsonByteWriter implements JsonWriter {
     public void writeProperty(String name, Map val, ObjectWriter objectWriter) {
         if (val == null) return;
         write(name);
-        write(IntChar.INT_COLON);
-        write(IntChar.INT_LCURLY);
+        writer.write(IntChar.INT_COLON);
+        writer.write(IntChar.INT_LCURLY);
         Set<Map.Entry<Object, Object>> set = val.entrySet();
         boolean first = true;
         for (Map.Entry<Object, Object> entry : set) {
             if (first) first = false;
             else writer.write(IntChar.INT_COMMA);
             writePropertyName(entry.getKey());
-            write(IntChar.INT_COLON);
+            writer.write(IntChar.INT_COLON);
             write(entry.getValue(), objectWriter);
         }
-        write(IntChar.INT_RCURLY);
-
+        writer.write(IntChar.INT_RCURLY);
     }
 
     @Override
-    public void writeProperty(String name, List val, ObjectWriter objectWriter) {
+    public void writeProperty(String name, Collection val, ObjectWriter objectWriter) {
         if (val == null) return;
         write(name);
-        write(IntChar.INT_COLON);
-        write(IntChar.INT_LBRACKET);
+        writer.write(IntChar.INT_COLON);
+        writer.write(IntChar.INT_LBRACKET);
         boolean first = true;
         for (Object item : val) {
             if (first) first = false;
             else writer.write(IntChar.INT_COMMA);
             write(item, objectWriter);
         }
-        write(IntChar.INT_RBRACKET);
-
-    }
-
-    @Override
-    public void writeProperty(String name, Set val, ObjectWriter objectWriter) {
-        if (val == null) return;
-        write(name);
-        write(IntChar.INT_COLON);
-        write(IntChar.INT_LBRACKET);
-        boolean first = true;
-        for (Object item : val) {
-            if (first) first = false;
-            else writer.write(IntChar.INT_COMMA);
-            write(item, objectWriter);
-        }
-        write(IntChar.INT_RBRACKET);
+        writer.write(IntChar.INT_RBRACKET);
     }
 }
