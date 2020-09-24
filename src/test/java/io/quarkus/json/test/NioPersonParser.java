@@ -71,7 +71,7 @@ public class NioPersonParser extends ObjectParser {
                         ctx.pushState(genericMapEnd, stateIndex);
                         return false;
                     }
-                    return ageEnd(ctx);
+                    return genericMapEnd(ctx);
                 }
                 break;
             case 'm':
