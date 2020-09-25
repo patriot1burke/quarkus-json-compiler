@@ -1,5 +1,6 @@
 package io.quarkus.json.deserializer.nio;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class MapParser extends ObjectParser {
@@ -13,6 +14,11 @@ public class MapParser extends ObjectParser {
         this.valueFunction = valueFunction;
         this.valueState = valueState;
         this.continueValueState = continueValueState;
+    }
+
+    @Override
+    public void beginObject(ParserContext ctx) {
+        ctx.pushTarget(new HashMap<>());
     }
 
     @Override

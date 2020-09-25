@@ -16,6 +16,7 @@ public class Person {
     private Map<String, Person> kids;
     private List<Person> siblings;
     private List<String> pets;
+    private Map<String, List<Person>> nested;
 
     public Map<String, Person> getKids() {
         return kids;
@@ -111,5 +112,13 @@ public class Person {
 
     public void setIntMap(Map<String, Integer> intMap) {
         this.intMap = intMap;
+    }
+
+    public Map<String, List<Person>> getNested() {
+        return nested;
+    }
+
+    public void setNested(Map<String, List<Person>> nested) {
+        this.nested = nested;
     }
 }

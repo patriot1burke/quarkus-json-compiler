@@ -47,6 +47,24 @@ public class NioExampleParserTest {
             "      \"age\": 7\n" +
             "    }\n" +
             "  },\n" +
+            " \"nested\": {\n" +
+            "  \"one\": [\n" +
+            "    {\n" +
+            "      \"name\": \"Ritchie\"\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"Joani\"\n" +
+            "    }\n" +
+            "  ],\n" +
+            "  \"two\": [\n" +
+            "    {\n" +
+            "      \"name\": \"Fonzi\"\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"Potsi\"\n" +
+            "    }\n" +
+            "  ]\n" +
+            "},\n" +
             "  \"siblings\": [\n" +
             "    {\n" +
             "      \"name\": \"Ritchie\"\n" +
@@ -166,6 +184,15 @@ public class NioExampleParserTest {
         validatePerson(person);
 
     }
+    @Test
+    public void testNioParserBuffered() {
+        ParserContext ctx = NioPersonParser.PARSER.parser();
+        ctx.parse(json);
+        System.out.println();
+        Person person = ctx.target();
+        validatePerson(person);
+
+    }
 
     List<String> breakup(String str, int size) {
         List<String> breakup = new LinkedList<>();
@@ -188,6 +215,10 @@ public class NioExampleParserTest {
         Assertions.assertEquals(123.23F, person.getMoney());
         Assertions.assertEquals(1, person.getIntMap().get("one"));
         Assertions.assertEquals(2, person.getIntMap().get("two"));
+        Assertions.assertEquals("Ritchie", person.getNested().get("one").get(0).getName());
+        Assertions.assertEquals("Joani", person.getNested().get("one").get(1).getName());
+        Assertions.assertEquals("Fonzi", person.getNested().get("two").get(0).getName());
+        Assertions.assertEquals("Potsi", person.getNested().get("two").get(1).getName());
         Assertions.assertEquals(3l, person.getGenericMap().get("three"));
         Assertions.assertEquals(4l, person.getGenericMap().get("four"));
         Assertions.assertEquals("John", person.getDad().getName());

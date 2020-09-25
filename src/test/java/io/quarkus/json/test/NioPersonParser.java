@@ -3,14 +3,13 @@ package io.quarkus.json.test;
 import io.quarkus.json.deserializer.nio.CollectionParser;
 import io.quarkus.json.deserializer.nio.ContextValue;
 import io.quarkus.json.deserializer.nio.GenericParser;
+import io.quarkus.json.deserializer.nio.ListParser;
 import io.quarkus.json.deserializer.nio.MapParser;
 import io.quarkus.json.deserializer.nio.ObjectParser;
 import io.quarkus.json.deserializer.nio.ParserContext;
 import io.quarkus.json.deserializer.nio.ParserState;
 import io.quarkus.json.deserializer.nio.BaseParser;
 
-import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -23,11 +22,16 @@ public class NioPersonParser extends ObjectParser {
     private static final MapParser kids = new MapParser(ContextValue.STRING_VALUE,
             ContextValue.OBJECT_VALUE,
             PARSER.start, PARSER.continueStart);
-    private static final CollectionParser siblings = new CollectionParser(ContextValue.OBJECT_VALUE,
+    private static final ListParser siblings = new ListParser(ContextValue.OBJECT_VALUE,
             PARSER.start);
-    private static final CollectionParser pets = new CollectionParser(ContextValue.STRING_VALUE,
+    private static final ListParser pets = new ListParser(ContextValue.STRING_VALUE,
             ObjectParser.PARSER.startStringValue);
 
+    private static final ListParser nested__l = new ListParser(ContextValue.OBJECT_VALUE,
+            PARSER.start);
+    private static final MapParser nested = new MapParser(ContextValue.STRING_VALUE,
+            ContextValue.OBJECT_VALUE,
+            nested__l.start, nested__l.continueStart);
     @Override
     public void beginObject(ParserContext ctx) {
         ctx.pushTarget(new Person());
@@ -105,22 +109,38 @@ public class NioPersonParser extends ObjectParser {
                 }
                 break;
             case 'n':
-                if (ctx.compareToken(index, "ame")) {
-                    if (!valueSeparator(ctx)) {
-                        ctx.pushState(continueStartStringValue, stateIndex);
-                        ctx.pushState(nameEnd, stateIndex);
-                        return false;
+                c = ctx.tokenCharAt(index++);
+                if (c == 'a') {
+                    if (ctx.compareToken(index, "me")) {
+                        if (!valueSeparator(ctx)) {
+                            ctx.pushState(continueStartStringValue, stateIndex);
+                            ctx.pushState(nameEnd, stateIndex);
+                            return false;
+                        }
+                        if (!startStringValue(ctx)) {
+                            ctx.pushState(nameEnd, stateIndex);
+                            return false;
+                        }
+                        return nameEnd(ctx);
                     }
-                    if (!startStringValue(ctx)) {
-                        ctx.pushState(nameEnd, stateIndex);
-                        return false;
+                } else if (c == 'e') {
+                    if (ctx.compareToken(index, "sted")) {
+                        if (!valueSeparator(ctx)) {
+                            ctx.pushState(nested.continueStart, stateIndex);
+                            ctx.pushState(nestedEnd, stateIndex);
+                            return false;
+                        }
+                        if (!nested.start(ctx)) {
+                            ctx.pushState(nestedEnd, stateIndex);
+                            return false;
+                        }
+                        return nestedEnd(ctx);
                     }
-                    return nameEnd(ctx);
+
                 }
                 break;
             case 'i':
                 if (ctx.compareToken(index, "ntMap")) {
-                    ctx.pushTarget(new HashMap());
                     if (!valueSeparator(ctx)) {
                         ctx.pushState(intMap.continueStart, stateIndex);
                         ctx.pushState(intMapEnd, stateIndex);
@@ -135,7 +155,6 @@ public class NioPersonParser extends ObjectParser {
                 break;
             case 'k':
                 if (ctx.compareToken(index, "ids")) {
-                    ctx.pushTarget(new HashMap());
                     if (!valueSeparator(ctx)) {
                         ctx.pushState(kids.continueStart, stateIndex);
                         ctx.pushState(kidsEnd, stateIndex);
@@ -164,7 +183,6 @@ public class NioPersonParser extends ObjectParser {
                 break;
             case 'p':
                 if (ctx.compareToken(index, "ets")) {
-                    ctx.pushTarget(new LinkedList());
                     if (!valueSeparator(ctx)) {
                         ctx.pushState(pets.continueStart, stateIndex);
                         ctx.pushState(petsEnd, stateIndex);
@@ -179,7 +197,6 @@ public class NioPersonParser extends ObjectParser {
                 break;
             case 's':
                 if (ctx.compareToken(index, "iblings")) {
-                    ctx.pushTarget(new LinkedList<>());
                     if (!valueSeparator(ctx)) {
                         ctx.pushState(siblings.continueStart, stateIndex);
                         ctx.pushState(siblingsEnd, stateIndex);
@@ -241,6 +258,18 @@ public class NioPersonParser extends ObjectParser {
         Map<String, Person> kids = ctx.popTarget();
         Person person = ctx.target();
         person.setKids(kids);
+        return true;
+    }
+
+    static final ParserState nestedEnd = (ctx) -> {
+        ctx.popState();
+        return nestedEnd(ctx);
+    };
+
+    private static final boolean nestedEnd(ParserContext ctx) {
+        Map<String, List<Person>> nested = ctx.popTarget();
+        Person person = ctx.target();
+        person.setNested(nested);
         return true;
     }
 
