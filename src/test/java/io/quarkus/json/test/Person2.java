@@ -16,6 +16,7 @@ public class Person2 {
     private Map genericMap;
     private Object genericBag;
     private List genericList;
+    private Map<String, List<Person2>> nested;
 
     public String getName() {
         return name;
@@ -111,5 +112,13 @@ public class Person2 {
 
     public void setGenericList(List genericList) {
         this.genericList = genericList;
+    }
+
+    public Map<String, List<Person2>> getNested() {
+        return nested;
+    }
+
+    public void setNested(Map<String, List<Person2>> nested) {
+        this.nested = nested;
     }
 }

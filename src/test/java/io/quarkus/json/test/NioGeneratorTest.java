@@ -78,6 +78,24 @@ public class NioGeneratorTest {
             "    \"b\"\n" +
             "  ],\n" +
             "  \"name\": \"Bill\",\n" +
+            " \"nested\": {\n" +
+            "  \"one\": [\n" +
+            "    {\n" +
+            "      \"name\": \"Ritchie\"\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"Joani\"\n" +
+            "    }\n" +
+            "  ],\n" +
+            "  \"two\": [\n" +
+            "    {\n" +
+            "      \"name\": \"Fonzi\"\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"Potsi\"\n" +
+            "    }\n" +
+            "  ]\n" +
+            "},\n" +
             "  \"age\": 50,\n" +
             "  \"money\": 123.23,\n" +
             "  \"married\": true,\n" +
@@ -161,6 +179,10 @@ public class NioGeneratorTest {
         Assertions.assertEquals("b", person.getGenericList().get(1));
         Assertions.assertEquals(3l, person.getGenericMap().get("three"));
         Assertions.assertEquals(4l, person.getGenericMap().get("four"));
+        Assertions.assertEquals("Ritchie", person.getNested().get("one").get(0).getName());
+        Assertions.assertEquals("Joani", person.getNested().get("one").get(1).getName());
+        Assertions.assertEquals("Fonzi", person.getNested().get("two").get(0).getName());
+        Assertions.assertEquals("Potsi", person.getNested().get("two").get(1).getName());
         Assertions.assertEquals("John", person.getDad().getName());
         Assertions.assertTrue(person.getDad().isMarried());
         Assertions.assertEquals("Sammy", person.getKids().get("Sammy").getName());

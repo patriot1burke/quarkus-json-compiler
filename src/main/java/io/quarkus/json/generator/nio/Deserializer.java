@@ -148,17 +148,31 @@ public class Deserializer {
         Type genericType = setter.genericType;
         Class type = setter.type;
         String property = setter.property;
+        collectionField(staticConstructor, type, genericType, property);
+
+    }
+
+    private void collectionField(MethodCreator staticConstructor, Class type, Type genericType, String property) {
         if (genericType instanceof ParameterizedType) {
             if (Map.class.isAssignableFrom(type)) {
                 ParameterizedType pt = (ParameterizedType) genericType;
                 Type keyType = pt.getActualTypeArguments()[0];
                 Class keyClass = Types.getRawType(keyType);
-                ResultHandle keyContextValue = contextValue(keyClass, keyType, staticConstructor);
                 Type valueType = pt.getActualTypeArguments()[1];
                 Class valueClass = Types.getRawType(valueType);
+
+                if (Map.class.isAssignableFrom(valueClass) && !valueClass.equals(Map.class)) throw new RuntimeException("Must use java.util.Map for property: " + property);
+                if (List.class.isAssignableFrom(valueClass) && !valueClass.equals(List.class)) throw new RuntimeException("Must use java.util.List for property: " + property);
+                if (Set.class.isAssignableFrom(valueClass) && !valueClass.equals(Set.class)) throw new RuntimeException("Must use java.util.Set for property: " + property);
+
+                if (valueClass.equals(Map.class) || valueClass.equals(List.class) || valueClass.equals(Set.class)) {
+                    collectionField(staticConstructor, valueClass, valueType, property + "_n");
+                }
+
+                ResultHandle keyContextValue = contextValue(keyClass, keyType, staticConstructor);
                 ResultHandle valueContextValue = contextValue(valueClass, valueType, staticConstructor);
-                ResultHandle valueState = collectionValueState(valueClass, valueType, staticConstructor);
-                ResultHandle continueValueState = continueValueState(valueClass, valueType, staticConstructor);
+                ResultHandle valueState = collectionValueState(valueClass, valueType, staticConstructor, property);
+                ResultHandle continueValueState = continueValueState(valueClass, valueType, staticConstructor, property);
                 FieldCreator mapParser = creator.getFieldCreator(property, MapParser.class).setModifiers(ACC_STATIC | ACC_PRIVATE | ACC_FINAL);
                 ResultHandle instance = staticConstructor.newInstance(MethodDescriptor.ofConstructor(MapParser.class, ContextValue.class, ContextValue.class, ParserState.class, ParserState.class),
                         keyContextValue, valueContextValue, valueState, continueValueState);
@@ -167,8 +181,18 @@ public class Deserializer {
                 ParameterizedType pt = (ParameterizedType) genericType;
                 Type valueType = pt.getActualTypeArguments()[0];
                 Class valueClass = Types.getRawType(valueType);
+
+                if (Map.class.isAssignableFrom(valueClass) && !valueClass.equals(Map.class)) throw new RuntimeException("Must use java.util.Map for property: " + property);
+                if (List.class.isAssignableFrom(valueClass) && !valueClass.equals(List.class)) throw new RuntimeException("Must use java.util.List for property: " + property);
+                if (Set.class.isAssignableFrom(valueClass) && !valueClass.equals(Set.class)) throw new RuntimeException("Must use java.util.Set for property: " + property);
+
+                if (valueClass.equals(Map.class) || valueClass.equals(List.class) || valueClass.equals(Set.class)) {
+                    collectionField(staticConstructor, valueClass, valueType, property + "_n");
+                }
+
+
                 ResultHandle valueContextValue = contextValue(valueClass, valueType, staticConstructor);
-                ResultHandle valueState = collectionValueState(valueClass, valueType, staticConstructor);
+                ResultHandle valueState = collectionValueState(valueClass, valueType, staticConstructor, property);
                 FieldCreator collectionParser = creator.getFieldCreator(property, ListParser.class).setModifiers(ACC_STATIC | ACC_PRIVATE | ACC_FINAL);
                 ResultHandle instance = staticConstructor.newInstance(MethodDescriptor.ofConstructor(ListParser.class, ContextValue.class, ParserState.class),
                         valueContextValue, valueState);
@@ -178,8 +202,17 @@ public class Deserializer {
                 ParameterizedType pt = (ParameterizedType) genericType;
                 Type valueType = pt.getActualTypeArguments()[0];
                 Class valueClass = Types.getRawType(valueType);
+
+                if (Map.class.isAssignableFrom(valueClass) && !valueClass.equals(Map.class)) throw new RuntimeException("Must use java.util.Map for property: " + property);
+                if (List.class.isAssignableFrom(valueClass) && !valueClass.equals(List.class)) throw new RuntimeException("Must use java.util.List for property: " + property);
+                if (Set.class.isAssignableFrom(valueClass) && !valueClass.equals(Set.class)) throw new RuntimeException("Must use java.util.Set for property: " + property);
+
+                if (valueClass.equals(Map.class) || valueClass.equals(List.class) || valueClass.equals(Set.class)) {
+                    collectionField(staticConstructor, valueClass, valueType, property + "_n");
+                }
+
                 ResultHandle valueContextValue = contextValue(valueClass, valueType, staticConstructor);
-                ResultHandle valueState = collectionValueState(valueClass, valueType, staticConstructor);
+                ResultHandle valueState = collectionValueState(valueClass, valueType, staticConstructor, property);
                 FieldCreator collectionParser = creator.getFieldCreator(property, SetParser.class).setModifiers(ACC_STATIC | ACC_PRIVATE | ACC_FINAL);
                 ResultHandle instance = staticConstructor.newInstance(MethodDescriptor.ofConstructor(SetParser.class, ContextValue.class, ParserState.class),
                         valueContextValue, valueState);
@@ -189,7 +222,6 @@ public class Deserializer {
                 // ignore we don't need a special parser
             }
         }
-
     }
 
     private ResultHandle contextValue(Class type, Type genericType, BytecodeCreator scope) {
@@ -220,7 +252,7 @@ public class Deserializer {
         }
     }
 
-    private ResultHandle collectionValueState(Class type, Type genericType, BytecodeCreator scope) {
+    private ResultHandle collectionValueState(Class type, Type genericType, BytecodeCreator scope, String property) {
         if (type.equals(String.class)
                 || type.equals(char.class) || type.equals(Character.class)
                 || type.equals(OffsetDateTime.class)
@@ -247,15 +279,44 @@ public class Deserializer {
             FieldDescriptor parserField = FieldDescriptor.of(ObjectParser.class, "PARSER", ObjectParser.class);
             ResultHandle PARSER = scope.readStaticField(parserField);
             return scope.readInstanceField(FieldDescriptor.of(ObjectParser.class, "startBooleanValue", ParserState.class), PARSER);
+        } else if (type.equals(Map.class)) {
+            if (genericType instanceof ParameterizedType) {
+                FieldDescriptor parserField = FieldDescriptor.of(fqn(), property + "_n", MapParser.class);
+                ResultHandle PARSER = scope.readStaticField(parserField);
+                return scope.readInstanceField(FieldDescriptor.of(MapParser.class, "start", ParserState.class), PARSER);
+            } else {
+                FieldDescriptor parserField = FieldDescriptor.of(GenericParser.class, "PARSER", GenericParser.class);
+                ResultHandle PARSER = scope.readStaticField(parserField);
+                return scope.readInstanceField(FieldDescriptor.of(GenericParser.class, "startObject", ParserState.class), PARSER);
+            }
+        } else if (type.equals(List.class)) {
+            if (genericType instanceof ParameterizedType) {
+                FieldDescriptor parserField = FieldDescriptor.of(fqn(), property + "_n", ListParser.class);
+                ResultHandle PARSER = scope.readStaticField(parserField);
+                return scope.readInstanceField(FieldDescriptor.of(ListParser.class, "start", ParserState.class), PARSER);
+            } else {
+                FieldDescriptor parserField = FieldDescriptor.of(GenericParser.class, "PARSER", GenericParser.class);
+                ResultHandle PARSER = scope.readStaticField(parserField);
+                return scope.readInstanceField(FieldDescriptor.of(GenericParser.class, "startList", ParserState.class), PARSER);
+            }
+        } else if (type.equals(Set.class)) {
+            if (genericType instanceof ParameterizedType) {
+                FieldDescriptor parserField = FieldDescriptor.of(fqn(), property + "_n", SetParser.class);
+                ResultHandle PARSER = scope.readStaticField(parserField);
+                return scope.readInstanceField(FieldDescriptor.of(SetParser.class, "start", ParserState.class), PARSER);
+            } else {
+                FieldDescriptor parserField = FieldDescriptor.of(GenericParser.class, "PARSER", GenericSetParser.class);
+                ResultHandle PARSER = scope.readStaticField(parserField);
+                return scope.readInstanceField(FieldDescriptor.of(GenericSetParser.class, "startList", ParserState.class), PARSER);
+            }
         } else {
-            // todo handle nested collections and maps
             FieldDescriptor parserField = FieldDescriptor.of(fqn(type, genericType), "PARSER", fqn(type, genericType));
             ResultHandle PARSER = scope.readStaticField(parserField);
             return scope.readInstanceField(FieldDescriptor.of(ObjectParser.class, "start", ParserState.class), PARSER);
         }
     }
 
-    private ResultHandle continueValueState(Class type, Type genericType, BytecodeCreator scope) {
+    private ResultHandle continueValueState(Class type, Type genericType, BytecodeCreator scope, String property) {
         if (type.equals(String.class)
                 || type.equals(char.class) || type.equals(Character.class)
                 || type.equals(OffsetDateTime.class)
@@ -282,6 +343,36 @@ public class Deserializer {
             FieldDescriptor parserField = FieldDescriptor.of(ObjectParser.class, "PARSER", ObjectParser.class);
             ResultHandle PARSER = scope.readStaticField(parserField);
             return scope.readInstanceField(FieldDescriptor.of(ObjectParser.class, "continueStartBooleanValue", ParserState.class), PARSER);
+        } else if (type.equals(Map.class)) {
+            if (genericType instanceof ParameterizedType) {
+                FieldDescriptor parserField = FieldDescriptor.of(fqn(), property + "_n", MapParser.class);
+                ResultHandle PARSER = scope.readStaticField(parserField);
+                return scope.readInstanceField(FieldDescriptor.of(MapParser.class, "continueStart", ParserState.class), PARSER);
+            } else {
+                FieldDescriptor parserField = FieldDescriptor.of(GenericParser.class, "PARSER", GenericParser.class);
+                ResultHandle PARSER = scope.readStaticField(parserField);
+                return scope.readInstanceField(FieldDescriptor.of(GenericParser.class, "continueStartObject", ParserState.class), PARSER);
+            }
+        } else if (type.equals(List.class)) {
+            if (genericType instanceof ParameterizedType) {
+                FieldDescriptor parserField = FieldDescriptor.of(fqn(), property + "_n", ListParser.class);
+                ResultHandle PARSER = scope.readStaticField(parserField);
+                return scope.readInstanceField(FieldDescriptor.of(ListParser.class, "continueStart", ParserState.class), PARSER);
+            } else {
+                FieldDescriptor parserField = FieldDescriptor.of(GenericParser.class, "PARSER", GenericParser.class);
+                ResultHandle PARSER = scope.readStaticField(parserField);
+                return scope.readInstanceField(FieldDescriptor.of(GenericParser.class, "continueStartList", ParserState.class), PARSER);
+            }
+        } else if (type.equals(Set.class)) {
+            if (genericType instanceof ParameterizedType) {
+                FieldDescriptor parserField = FieldDescriptor.of(fqn(), property + "_n", SetParser.class);
+                ResultHandle PARSER = scope.readStaticField(parserField);
+                return scope.readInstanceField(FieldDescriptor.of(SetParser.class, "continueStart", ParserState.class), PARSER);
+            } else {
+                FieldDescriptor parserField = FieldDescriptor.of(GenericParser.class, "PARSER", GenericSetParser.class);
+                ResultHandle PARSER = scope.readStaticField(parserField);
+                return scope.readInstanceField(FieldDescriptor.of(GenericSetParser.class, "continueStartList", ParserState.class), PARSER);
+            }
         } else {
             // todo handle nested collections and maps
             FieldDescriptor parserField = FieldDescriptor.of(fqn(type, genericType), "PARSER", fqn(type, genericType));
@@ -479,7 +570,7 @@ public class Deserializer {
         } else if (Map.class.isAssignableFrom(setter.type)) {
             if (!Map.class.equals(setter.type)) throw new RuntimeException("Cannot use concrete map.  Must use java.util.Map for property: " + setter.property);
             if (setter.genericType instanceof ParameterizedType) {
-                FieldDescriptor mapFieldDesc = FieldDescriptor.of(fqn(type, genericType), setter.property, MapParser.class);
+                FieldDescriptor mapFieldDesc = FieldDescriptor.of(fqn(), setter.property, MapParser.class);
                 ResultHandle mapField = scope.readStaticField(mapFieldDesc);
                 return scope.readInstanceField(FieldDescriptor.of(MapParser.class, "continueStart", ParserState.class), mapField);
             } else {
