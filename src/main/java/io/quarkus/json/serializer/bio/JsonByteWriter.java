@@ -21,6 +21,18 @@ public class JsonByteWriter implements JsonWriter {
     }
 
     @Override
+    public void writeLCurley() {
+        this.writer.write(IntChar.INT_LCURLY);
+
+    }
+
+    @Override
+    public void writeRCurley() {
+        this.writer.write(IntChar.INT_RCURLY);
+
+    }
+
+    @Override
     public void write(short val) {
         write((long)val);
     }
@@ -131,13 +143,6 @@ public class JsonByteWriter implements JsonWriter {
         writer.write(IntChar.INT_QUOTE);
         writer.write(val.getBytes(UTF8));
         writer.write(IntChar.INT_QUOTE);
-    }
-
-    @Override
-    public void write(Object val, ObjectWriter writer) {
-        this.writer.write(IntChar.INT_LCURLY);
-        writer.write(this, val);
-        this.writer.write(IntChar.INT_RCURLY);
     }
 
     @Override
@@ -385,7 +390,7 @@ public class JsonByteWriter implements JsonWriter {
         if (comma) this.writer.write(IntChar.INT_COMMA);
         write(name);
         this.writer.write(IntChar.INT_COLON);
-        write(val, writer);
+        writer.write(this, val);
         return true;
     }
 
@@ -492,7 +497,7 @@ public class JsonByteWriter implements JsonWriter {
             writePropertyName(entry.getKey());
             writer.write(IntChar.INT_COLON);
             try {
-                write(entry.getValue(), objectWriter);
+                objectWriter.write(this, entry.getValue());
             } catch (RuntimeException e) {
                 throw new RuntimeException("Failed to write map property: " + name, e);
             }
@@ -512,7 +517,7 @@ public class JsonByteWriter implements JsonWriter {
         for (Object item : val) {
             if (first) first = false;
             else writer.write(IntChar.INT_COMMA);
-            write(item, objectWriter);
+            objectWriter.write(this, item);
         }
         writer.write(IntChar.INT_RBRACKET);
         return true;

@@ -4,6 +4,8 @@ import java.util.Collection;
 import java.util.Map;
 
 public interface JsonWriter {
+    void writeLCurley();
+    void writeRCurley();
     void write(short val);
     void write(int val);
     void write(long val);
@@ -21,7 +23,6 @@ public interface JsonWriter {
     void write(Float val);
     void write(Double val);
     void write(String val);
-    void write(Object obj, ObjectWriter writer);
     void writeObject(Object obj);
     void write(Map val);
     void write(Map val, ObjectWriter valueWriter);

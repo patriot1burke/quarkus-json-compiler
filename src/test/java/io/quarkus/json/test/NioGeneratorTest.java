@@ -153,7 +153,7 @@ public class NioGeneratorTest {
         JsonByteWriter jsonWriter = new JsonByteWriter(writer);
         Class serializer = loader.loadClass(Serializer.fqn(Person2.class, Person2.class));
         ObjectWriter objectWriter = (ObjectWriter)serializer.newInstance();
-        jsonWriter.write(person, objectWriter);
+        objectWriter.write(jsonWriter, person);
 
         byte[] bytes = writer.getBytes();
         System.out.println(new String(bytes, JsonByteWriter.UTF8));

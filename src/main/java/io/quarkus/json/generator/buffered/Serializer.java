@@ -129,8 +129,25 @@ public class Serializer {
         Type genericType = getter.genericType;
         Class type = getter.type;
         String property = getter.property;
-        collectionField(staticConstructor, type, genericType, property);
-
+        if (genericType instanceof ParameterizedType) {
+            if (Map.class.isAssignableFrom(type)) {
+                ParameterizedType pt = (ParameterizedType) genericType;
+                Type valueType = pt.getActualTypeArguments()[1];
+                Class valueClass = Types.getRawType(valueType);
+                if (hasNestedWriter(valueClass, valueType)) {
+                    collectionField(staticConstructor, valueClass, valueType, property + "_n");
+                }
+            } else if (List.class.isAssignableFrom(type) || Set.class.isAssignableFrom(type)) {
+                ParameterizedType pt = (ParameterizedType) genericType;
+                Type valueType = pt.getActualTypeArguments()[0];
+                Class valueClass = Types.getRawType(valueType);
+                if (hasNestedWriter(valueClass, valueType)) {
+                    collectionField(staticConstructor, valueClass, valueType, property + "_n");
+                }
+            } else {
+                // ignore we don't need a special parser
+            }
+        }
     }
     private ResultHandle getNestedValueWriter(MethodCreator staticConstructor, Class type, Type genericType, String property) {
         if (!hasNestedWriter(type, genericType)) return null;
@@ -180,6 +197,7 @@ public class Serializer {
         AssignableResultHandle comma = method.createVariable(boolean.class);
         method.assign(comma, method.load(false));
         boolean forceComma = false;
+        method.invokeInterfaceMethod(MethodDescriptor.ofMethod(JsonWriter.class, "writeLCurley", void.class), jsonWriter);
         // todo support an interface as type
         for (Getter getter : getters) {
             if (getter.type.equals(int.class)) {
@@ -310,10 +328,10 @@ public class Serializer {
                 if (!forceComma) method.assign(comma, result);
             } else if (Map.class.isAssignableFrom(getter.type)) {
                 if (hasCollectionWriter(getter)) {
-                    ResultHandle result = method.invokeInterfaceMethod(MethodDescriptor.ofMethod(JsonWriter.class, "writeObjectProperty", boolean.class, String.class, Object.class, ObjectWriter.class, boolean.class), jsonWriter,
+                    ResultHandle result = method.invokeInterfaceMethod(MethodDescriptor.ofMethod(JsonWriter.class, "writeProperty", boolean.class, String.class, Map.class, ObjectWriter.class, boolean.class), jsonWriter,
                             method.load(getter.name),
                             method.invokeVirtualMethod(MethodDescriptor.ofMethod(targetType, getter.method.getName(), getter.type), target),
-                            method.readStaticField(FieldDescriptor.of(fqn(), getter.property, ObjectWriter.class)),
+                            getMapWriter(method, getter),
                             comma
                     );
                     if (!forceComma) method.assign(comma, result);
@@ -326,10 +344,10 @@ public class Serializer {
                 }
             } else if (Collection.class.isAssignableFrom(getter.type)) {
                 if (hasCollectionWriter(getter)) {
-                    ResultHandle result = method.invokeInterfaceMethod(MethodDescriptor.ofMethod(JsonWriter.class, "writeObjectProperty", boolean.class, String.class, Object.class, ObjectWriter.class, boolean.class), jsonWriter,
+                    ResultHandle result = method.invokeInterfaceMethod(MethodDescriptor.ofMethod(JsonWriter.class, "writeProperty", boolean.class, String.class, Collection.class, ObjectWriter.class, boolean.class), jsonWriter,
                             method.load(getter.name),
                             method.invokeVirtualMethod(MethodDescriptor.ofMethod(targetType, getter.method.getName(), getter.type), target),
-                            method.readStaticField(FieldDescriptor.of(fqn(), getter.property, ObjectWriter.class)),
+                            getCollectionWriter(method, getter),
                             comma
                     );
                     if (!forceComma) method.assign(comma, result);
@@ -357,7 +375,32 @@ public class Serializer {
                 if (!forceComma) method.assign(comma, result);
             }
         }
+        method.invokeInterfaceMethod(MethodDescriptor.ofMethod(JsonWriter.class, "writeRCurley", void.class), jsonWriter);
         method.returnValue(null);
+    }
+
+    private ResultHandle getCollectionWriter(MethodCreator method, Getter getter) {
+        ParameterizedType pt = (ParameterizedType)getter.genericType;
+        Class valueClass = Types.getRawType(pt.getActualTypeArguments()[0]);
+        Type valueType = pt.getActualTypeArguments()[0];
+        return getWriter(method, getter, valueClass, valueType);
+
+    }
+
+    private ResultHandle getWriter(MethodCreator method, Getter getter, Class valueClass, Type valueType) {
+        if (isUserObject(valueClass)) {
+            return method.readStaticField(FieldDescriptor.of(fqn(valueClass, valueType), "SERIALIZER", fqn(valueClass, valueType)));
+        } else {
+            return method.readStaticField(FieldDescriptor.of(fqn(), getter.property + "_n", ObjectWriter.class));
+        }
+    }
+
+    private ResultHandle getMapWriter(MethodCreator method, Getter getter) {
+        ParameterizedType pt = (ParameterizedType)getter.genericType;
+        Class valueClass = Types.getRawType(pt.getActualTypeArguments()[1]);
+        Type valueType = pt.getActualTypeArguments()[1];
+        return getWriter(method, getter, valueClass, valueType);
+
     }
 
     private boolean isUserObject(Class type) {
