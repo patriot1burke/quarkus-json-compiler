@@ -4,9 +4,9 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
-import io.quarkus.json.deserializer.nio.GenericParser;
-import io.quarkus.json.deserializer.nio.JsonParser;
-import io.quarkus.json.deserializer.nio.ParserContext;
+import io.quarkus.json.deserializer.GenericParser;
+import io.quarkus.json.deserializer.JsonParser;
+import io.quarkus.json.deserializer.ParserContext;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -340,25 +340,14 @@ public class NioExampleParserTest {
                 .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true);
         ObjectReader reader = mapper.readerFor(Person.class);
         JsonParser parser = NioPersonParser.PARSER;
-        io.quarkus.json.deserializer.buffered.JsonParser buffered = BufferedPersonParser.PARSER;
         byte[] array = json.getBytes("UTF-8");
         // warm up
         int ITERATIONS = 10000;
         for (int i = 0; i < ITERATIONS; i++) {
             reader.readValue(array);
             parser.parser().parse(array);
-            buffered.parser().parse(array);
         }
         long start = 0;
-        System.gc();
-        Thread.sleep(100);
-
-        start = System.currentTimeMillis();
-        for (int i = 0; i < ITERATIONS; i++) {
-            buffered.parser().parse(array);
-        }
-        System.out.println("buffered took: " + (System.currentTimeMillis() - start) + " (ms)");
-
         System.gc();
         Thread.sleep(100);
 

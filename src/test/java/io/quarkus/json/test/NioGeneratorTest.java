@@ -1,17 +1,15 @@
 package io.quarkus.json.test;
 
 import io.quarkus.gizmo.TestClassLoader;
-import io.quarkus.json.deserializer.nio.JsonParser;
-import io.quarkus.json.deserializer.nio.ParserContext;
-import io.quarkus.json.generator.buffered.Serializer;
-import io.quarkus.json.generator.nio.Deserializer;
-import io.quarkus.json.serializer.bio.ByteArrayByteWriter;
-import io.quarkus.json.serializer.bio.JsonByteWriter;
-import io.quarkus.json.serializer.bio.ObjectWriter;
+import io.quarkus.json.deserializer.JsonParser;
+import io.quarkus.json.deserializer.ParserContext;
+import io.quarkus.json.generator.Serializer;
+import io.quarkus.json.generator.Deserializer;
+import io.quarkus.json.serializer.ByteArrayByteWriter;
+import io.quarkus.json.serializer.JsonByteWriter;
+import io.quarkus.json.serializer.ObjectWriter;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-
-import java.nio.charset.Charset;
 
 public class NioGeneratorTest {
 

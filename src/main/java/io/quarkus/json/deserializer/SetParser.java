@@ -1,4 +1,4 @@
-package io.quarkus.json.deserializer.nio;
+package io.quarkus.json.deserializer;
 
 import java.util.HashSet;
 

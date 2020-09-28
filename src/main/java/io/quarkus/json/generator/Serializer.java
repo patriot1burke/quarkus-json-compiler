@@ -1,4 +1,4 @@
-package io.quarkus.json.generator.buffered;
+package io.quarkus.json.generator;
 
 import io.quarkus.gizmo.AssignableResultHandle;
 import io.quarkus.gizmo.ClassCreator;
@@ -8,18 +8,10 @@ import io.quarkus.gizmo.FieldDescriptor;
 import io.quarkus.gizmo.MethodCreator;
 import io.quarkus.gizmo.MethodDescriptor;
 import io.quarkus.gizmo.ResultHandle;
-import io.quarkus.json.deserializer.nio.ContextValue;
-import io.quarkus.json.deserializer.nio.ListParser;
-import io.quarkus.json.deserializer.nio.MapParser;
-import io.quarkus.json.deserializer.nio.ParserState;
-import io.quarkus.json.deserializer.nio.SetParser;
-import io.quarkus.json.generator.Types;
-import io.quarkus.json.generator.nio.Deserializer;
-import io.quarkus.json.serializer.bio.CollectionWriter;
-import io.quarkus.json.serializer.bio.JsonWriter;
-import io.quarkus.json.serializer.bio.MapWriter;
-import io.quarkus.json.serializer.bio.ObjectWriter;
-import org.jboss.logging.annotations.Param;
+import io.quarkus.json.serializer.CollectionWriter;
+import io.quarkus.json.serializer.JsonWriter;
+import io.quarkus.json.serializer.MapWriter;
+import io.quarkus.json.serializer.ObjectWriter;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;

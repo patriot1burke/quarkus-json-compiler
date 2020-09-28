@@ -1,4 +1,4 @@
-package io.quarkus.json.serializer.bio;
+package io.quarkus.json.serializer;
 
 import java.util.Collection;
 

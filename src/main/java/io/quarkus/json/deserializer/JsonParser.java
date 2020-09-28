@@ -1,4 +1,4 @@
-package io.quarkus.json.deserializer.buffered;
+package io.quarkus.json.deserializer;
 
 public interface JsonParser {
     ParserContext parser();

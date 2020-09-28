@@ -1,5 +1,6 @@
-package io.quarkus.json.deserializer.buffered;
+package io.quarkus.json.deserializer;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 public interface ContextValue {
@@ -13,6 +14,7 @@ public interface ContextValue {
     ContextValue FLOAT_VALUE = (ctx) -> Float.valueOf(ctx.popToken());
     ContextValue DOUBLE_VALUE = (ctx) -> Double.valueOf(ctx.popToken());
     ContextValue OFFSET_DATETIME_VALUE = (ctx) -> OffsetDateTime.parse(ctx.popToken());
+    ContextValue BIGDECIMAL_VALUE = (ctx) -> new BigDecimal(ctx.popToken());
     ContextValue STRING_VALUE = (ctx) -> ctx.popToken();
     ContextValue OBJECT_VALUE = (ctx) -> ctx.popTarget();
     ContextValue CHAR_VALUE = (ctx) -> {

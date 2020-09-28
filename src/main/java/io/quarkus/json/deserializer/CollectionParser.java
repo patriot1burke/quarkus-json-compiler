@@ -1,11 +1,10 @@
-package io.quarkus.json.deserializer.buffered;
+package io.quarkus.json.deserializer;
 
 import java.util.Collection;
 
 public class CollectionParser extends ObjectParser {
     ContextValue valueFunction;
-    ParserState  valueState;
-    private ParserState addListValue = this::addListValue;
+    ParserState valueState;
 
     public CollectionParser(ContextValue valueFunction, ParserState valueState) {
         this.valueFunction = valueFunction;
@@ -13,8 +12,8 @@ public class CollectionParser extends ObjectParser {
     }
 
     @Override
-    public void start(ParserContext ctx) {
-        startList(ctx);
+    public boolean start(ParserContext ctx) {
+        return startList(ctx);
     }
 
     public void addListValue(ParserContext ctx) {
@@ -24,8 +23,8 @@ public class CollectionParser extends ObjectParser {
     }
 
     @Override
-    public void listValue(ParserContext ctx) {
-        valueState.parse(ctx);
+    public boolean listValue(ParserContext ctx) {
+        return valueState.parse(ctx);
     }
 
 }

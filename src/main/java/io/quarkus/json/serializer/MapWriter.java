@@ -1,6 +1,5 @@
-package io.quarkus.json.serializer.bio;
+package io.quarkus.json.serializer;
 
-import java.util.Collection;
 import java.util.Map;
 
 public class MapWriter implements ObjectWriter {
