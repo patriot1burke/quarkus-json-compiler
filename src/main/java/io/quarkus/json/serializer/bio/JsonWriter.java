@@ -23,7 +23,10 @@ public interface JsonWriter {
     void write(String val);
     void write(Object obj, ObjectWriter writer);
     void writeObject(Object obj);
-
+    void write(Map val);
+    void write(Map val, ObjectWriter valueWriter);
+    void write(Collection val);
+    void write(Collection val, ObjectWriter elementWriter);
 
     void writeProperty(String name, char val, boolean comma);
     void writeProperty(String name, short val, boolean comma);
@@ -42,7 +45,7 @@ public interface JsonWriter {
     boolean writeProperty(String name, Float val, boolean comma);
     boolean writeProperty(String name, Double val, boolean comma);
     boolean writeProperty(String name, String val, boolean comma);
-    boolean writeProperty(String name, Object obj, ObjectWriter writer, boolean comma);
+    boolean writeObjectProperty(String name, Object obj, ObjectWriter writer, boolean comma);
     boolean writeObjectProperty(String name, Object obj, boolean comma);
 
 

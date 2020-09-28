@@ -8,9 +8,18 @@ import io.quarkus.gizmo.FieldDescriptor;
 import io.quarkus.gizmo.MethodCreator;
 import io.quarkus.gizmo.MethodDescriptor;
 import io.quarkus.gizmo.ResultHandle;
+import io.quarkus.json.deserializer.nio.ContextValue;
+import io.quarkus.json.deserializer.nio.ListParser;
+import io.quarkus.json.deserializer.nio.MapParser;
+import io.quarkus.json.deserializer.nio.ParserState;
+import io.quarkus.json.deserializer.nio.SetParser;
 import io.quarkus.json.generator.Types;
+import io.quarkus.json.generator.nio.Deserializer;
+import io.quarkus.json.serializer.bio.CollectionWriter;
 import io.quarkus.json.serializer.bio.JsonWriter;
+import io.quarkus.json.serializer.bio.MapWriter;
 import io.quarkus.json.serializer.bio.ObjectWriter;
+import org.jboss.logging.annotations.Param;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -22,9 +31,10 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
-import static org.objectweb.asm.Opcodes.ACC_STATIC;
+import static org.objectweb.asm.Opcodes.*;
+import static org.objectweb.asm.Opcodes.ACC_FINAL;
 
 public class Serializer {
 
@@ -108,8 +118,59 @@ public class Serializer {
         staticConstructor.setModifiers(ACC_STATIC);
         ResultHandle instance = staticConstructor.newInstance(MethodDescriptor.ofConstructor(fqn()));
         staticConstructor.writeStaticField(SERIALIZER.getFieldDescriptor(), instance);
+        for (Getter getter : getters) {
+            collectionField(staticConstructor, getter);
+        }
+
         staticConstructor.returnValue(null);
     }
+
+    private void collectionField(MethodCreator staticConstructor, Getter getter) {
+        Type genericType = getter.genericType;
+        Class type = getter.type;
+        String property = getter.property;
+        collectionField(staticConstructor, type, genericType, property);
+
+    }
+    private ResultHandle getNestedValueWriter(MethodCreator staticConstructor, Class type, Type genericType, String property) {
+        if (!hasNestedWriter(type, genericType)) return null;
+        if (isUserObject(type)) {
+            return staticConstructor.readStaticField(FieldDescriptor.of(fqn(type, genericType), "SERIALIZER", fqn(type, genericType)));
+        }
+        collectionField(staticConstructor, type, genericType, property);
+        return staticConstructor.readStaticField(FieldDescriptor.of(fqn(), property, ObjectWriter.class));
+    }
+
+    private void collectionField(MethodCreator staticConstructor, Class type, Type genericType, String property) {
+        if (genericType instanceof ParameterizedType) {
+            if (Map.class.isAssignableFrom(type)) {
+                ParameterizedType pt = (ParameterizedType) genericType;
+                Type valueType = pt.getActualTypeArguments()[1];
+                Class valueClass = Types.getRawType(valueType);
+                ResultHandle nested = getNestedValueWriter(staticConstructor, valueClass, valueType, property + "_n");
+                if (nested == null) return;
+
+                FieldCreator mapWriter = creator.getFieldCreator(property, ObjectWriter.class).setModifiers(ACC_STATIC | ACC_PRIVATE | ACC_FINAL);
+                ResultHandle instance = staticConstructor.newInstance(MethodDescriptor.ofConstructor(MapWriter.class, ObjectWriter.class),
+                        nested);
+                staticConstructor.writeStaticField(mapWriter.getFieldDescriptor(), instance);
+            } else if (List.class.isAssignableFrom(type) || Set.class.isAssignableFrom(type)) {
+                ParameterizedType pt = (ParameterizedType) genericType;
+                Type valueType = pt.getActualTypeArguments()[0];
+                Class valueClass = Types.getRawType(valueType);
+                ResultHandle nested = getNestedValueWriter(staticConstructor, valueClass, valueType, property + "_n");
+                if (nested == null) return;
+
+                FieldCreator mapWriter = creator.getFieldCreator(property, ObjectWriter.class).setModifiers(ACC_STATIC | ACC_PRIVATE | ACC_FINAL);
+                ResultHandle instance = staticConstructor.newInstance(MethodDescriptor.ofConstructor(CollectionWriter.class, ObjectWriter.class),
+                        nested);
+                staticConstructor.writeStaticField(mapWriter.getFieldDescriptor(), instance);
+            } else {
+                // ignore we don't need a special parser
+            }
+        }
+    }
+
 
     private void writeMethod() {
         MethodCreator method = creator.getMethodCreator("write", void.class, JsonWriter.class, Object.class);
@@ -248,47 +309,35 @@ public class Serializer {
                         comma);
                 if (!forceComma) method.assign(comma, result);
             } else if (Map.class.isAssignableFrom(getter.type)) {
-                Class valueType = null;
-                if (getter.genericType instanceof ParameterizedType) {
-                    ParameterizedType pt = (ParameterizedType)getter.genericType;
-                    valueType = Types.getRawType(pt.getActualTypeArguments()[1]);
-                }
-                if (valueType == null || !isUserObject(valueType)) {
+                if (hasCollectionWriter(getter)) {
+                    ResultHandle result = method.invokeInterfaceMethod(MethodDescriptor.ofMethod(JsonWriter.class, "writeObjectProperty", boolean.class, String.class, Object.class, ObjectWriter.class, boolean.class), jsonWriter,
+                            method.load(getter.name),
+                            method.invokeVirtualMethod(MethodDescriptor.ofMethod(targetType, getter.method.getName(), getter.type), target),
+                            method.readStaticField(FieldDescriptor.of(fqn(), getter.property, ObjectWriter.class)),
+                            comma
+                    );
+                    if (!forceComma) method.assign(comma, result);
+                } else {
                     ResultHandle result = method.invokeInterfaceMethod(MethodDescriptor.ofMethod(JsonWriter.class, "writeProperty", boolean.class, String.class, Map.class, boolean.class), jsonWriter,
                             method.load(getter.name),
                             method.invokeVirtualMethod(MethodDescriptor.ofMethod(targetType, getter.method.getName(), getter.type), target),
                             comma);
                     if (!forceComma) method.assign(comma, result);
-                } else {
-                    needed.put(getter.type, getter.genericType);
-                    ResultHandle result = method.invokeInterfaceMethod(MethodDescriptor.ofMethod(JsonWriter.class, "writeProperty", boolean.class, String.class, Map.class, ObjectWriter.class, boolean.class), jsonWriter,
+                }
+            } else if (Collection.class.isAssignableFrom(getter.type)) {
+                if (hasCollectionWriter(getter)) {
+                    ResultHandle result = method.invokeInterfaceMethod(MethodDescriptor.ofMethod(JsonWriter.class, "writeObjectProperty", boolean.class, String.class, Object.class, ObjectWriter.class, boolean.class), jsonWriter,
                             method.load(getter.name),
                             method.invokeVirtualMethod(MethodDescriptor.ofMethod(targetType, getter.method.getName(), getter.type), target),
-                            method.readStaticField(FieldDescriptor.of(fqn(valueType, valueType), "SERIALIZER", fqn(valueType, valueType))),
+                            method.readStaticField(FieldDescriptor.of(fqn(), getter.property, ObjectWriter.class)),
                             comma
                     );
                     if (!forceComma) method.assign(comma, result);
-                }
-            } else if (Collection.class.isAssignableFrom(getter.type)) {
-                Class valueType = null;
-                if (getter.genericType instanceof ParameterizedType) {
-                    ParameterizedType pt = (ParameterizedType) getter.genericType;
-                    valueType = Types.getRawType(pt.getActualTypeArguments()[0]);
-                }
-                if (valueType == null || !isUserObject(valueType)) {
+                } else {
                     ResultHandle result = method.invokeInterfaceMethod(MethodDescriptor.ofMethod(JsonWriter.class, "writeProperty", boolean.class, String.class, Collection.class, boolean.class), jsonWriter,
                             method.load(getter.name),
                             method.invokeVirtualMethod(MethodDescriptor.ofMethod(targetType, getter.method.getName(), getter.type), target),
                             comma);
-                    if (!forceComma) method.assign(comma, result);
-                } else {
-                    needed.put(getter.type, getter.genericType);
-                    ResultHandle result = method.invokeInterfaceMethod(MethodDescriptor.ofMethod(JsonWriter.class, "writeProperty", boolean.class, String.class, Collection.class, ObjectWriter.class, boolean.class), jsonWriter,
-                            method.load(getter.name),
-                            method.invokeVirtualMethod(MethodDescriptor.ofMethod(targetType, getter.method.getName(), getter.type), target),
-                            method.readStaticField(FieldDescriptor.of(fqn(valueType, valueType), "SERIALIZER", fqn(valueType, valueType))),
-                            comma
-                    );
                     if (!forceComma) method.assign(comma, result);
                 }
             } else if (getter.type.equals(Object.class)) {
@@ -299,7 +348,7 @@ public class Serializer {
                 if (!forceComma) method.assign(comma, result);
             } else {
                 needed.put(getter.type, getter.genericType);
-                ResultHandle result = method.invokeInterfaceMethod(MethodDescriptor.ofMethod(JsonWriter.class, "writeProperty", boolean.class, String.class, Object.class, ObjectWriter.class, boolean.class), jsonWriter,
+                ResultHandle result = method.invokeInterfaceMethod(MethodDescriptor.ofMethod(JsonWriter.class, "writeObjectProperty", boolean.class, String.class, Object.class, ObjectWriter.class, boolean.class), jsonWriter,
                         method.load(getter.name),
                         method.invokeVirtualMethod(MethodDescriptor.ofMethod(targetType, getter.method.getName(), getter.type), target),
                         method.readStaticField(FieldDescriptor.of(fqn(getter.type, getter.genericType), "SERIALIZER", fqn(getter.type, getter.genericType))),
@@ -322,12 +371,58 @@ public class Serializer {
                 || type.equals(Double.class)
                 || type.equals(Float.class)
                 || type.equals(Character.class)
+                || Map.class.isAssignableFrom(type)
+                || List.class.isAssignableFrom(type)
+                || Set.class.isAssignableFrom(type)
         ) {
             return false;
         }
         return true;
     }
 
+    private boolean hasCollectionWriter(Getter getter) {
+        Class type = getter.type;
+        Type genericType = getter.genericType;
+        if (!(genericType instanceof ParameterizedType)) return false;
+        if (Map.class.isAssignableFrom(type)) {
+            ParameterizedType pt = (ParameterizedType) genericType;
+            Type valueType = pt.getActualTypeArguments()[1];
+            Class valueClass = Types.getRawType(valueType);
+            return hasNestedWriter(valueClass ,valueType);
+        } else if (Collection.class.isAssignableFrom(type)) {
+            ParameterizedType pt = (ParameterizedType)genericType;
+            Class valueClass = Types.getRawType(pt.getActualTypeArguments()[0]);
+            Type valueGenericType = pt.getActualTypeArguments()[0];
+            return hasNestedWriter(valueClass, valueGenericType);
+        } else {
+            return false;
+        }
+    }
+
+    private boolean hasNestedWriter(Class type, Type genericType) {
+        if (isUserObject(type)) return true;
+        if (!Map.class.isAssignableFrom(type)
+                && !List.class.isAssignableFrom(type)
+                && !Set.class.isAssignableFrom(type)
+        ) {
+            return false;
+        }
+
+        if (!(genericType instanceof ParameterizedType)) return false;
+
+        if (Map.class.isAssignableFrom(type)) {
+            ParameterizedType pt = (ParameterizedType)genericType;
+            Class valueClass = Types.getRawType(pt.getActualTypeArguments()[1]);
+            Type valueGenericType = pt.getActualTypeArguments()[1];
+            return hasNestedWriter(valueClass, valueGenericType);
+        } else if (Collection.class.isAssignableFrom(type)) {
+            ParameterizedType pt = (ParameterizedType)genericType;
+            Class valueClass = Types.getRawType(pt.getActualTypeArguments()[0]);
+            Type valueGenericType = pt.getActualTypeArguments()[0];
+            return hasNestedWriter(valueClass, valueGenericType);
+        }
+        return false;
+    }
 
 
     private String fqn() {
@@ -355,7 +450,7 @@ public class Serializer {
                     name = m.getName().substring(3).toLowerCase();
                 }
             }
-            getters.add(new Getter(name, m, paramType, paramGenericType));
+            getters.add(new Getter(name, name, m, paramType, paramGenericType));
         }
         Collections.sort(getters, (getter, t1) -> getter.name.compareTo(t1.name));
     }
@@ -369,12 +464,14 @@ public class Serializer {
 
     class Getter {
         String name;
+        String property;
         Method method;
         Class type;
         Type genericType;
 
-        public Getter(String name, Method method, Class type, Type genericType) {
+        public Getter(String name, String property, Method method, Class type, Type genericType) {
             this.name = name;
+            this.property = property;
             this.method = method;
             this.type = type;
             this.genericType = genericType;

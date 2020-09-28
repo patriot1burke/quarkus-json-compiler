@@ -164,9 +164,12 @@ public class JsonByteWriter implements JsonWriter {
             write((Boolean)obj);
         } else if (obj instanceof Character) {
             write((Character)obj);
+        } else {
+            throw new RuntimeException("Unable to determine type to write: " + obj.getClass().getName());
         }
     }
 
+    @Override
     public void write(Map val) {
         writer.write(IntChar.INT_LCURLY);
         Set<Map.Entry<Object, Object>> set = val.entrySet();
@@ -176,18 +179,46 @@ public class JsonByteWriter implements JsonWriter {
             else writer.write(IntChar.INT_COMMA);
             writePropertyName(entry.getKey());
             writer.write(IntChar.INT_COLON);
-            writePropertyValue(entry.getValue());
+            writeObject(entry.getValue());
         }
         writer.write(IntChar.INT_RCURLY);
     }
 
+    @Override
+    public void write(Map val, ObjectWriter valueWriter) {
+        writer.write(IntChar.INT_LCURLY);
+        Set<Map.Entry<Object, Object>> set = val.entrySet();
+        boolean first = true;
+        for (Map.Entry<Object, Object> entry : set) {
+            if (first) first = false;
+            else writer.write(IntChar.INT_COMMA);
+            writePropertyName(entry.getKey());
+            writer.write(IntChar.INT_COLON);
+            valueWriter.write(this, entry.getValue());
+        }
+        writer.write(IntChar.INT_RCURLY);
+    }
+
+    @Override
     public void write(Collection val) {
         writer.write(IntChar.INT_LBRACKET);
         boolean first = true;
         for (Object item : val) {
             if (first) first = false;
             else writer.write(IntChar.INT_COMMA);
-            writePropertyValue(item);
+            writeObject(item);
+        }
+        writer.write(IntChar.INT_RBRACKET);
+    }
+
+    @Override
+    public void write(Collection val, ObjectWriter elementWriter) {
+        writer.write(IntChar.INT_LBRACKET);
+        boolean first = true;
+        for (Object item : val) {
+            if (first) first = false;
+            else writer.write(IntChar.INT_COMMA);
+            elementWriter.write(this, item);
         }
         writer.write(IntChar.INT_RBRACKET);
     }
@@ -349,7 +380,7 @@ public class JsonByteWriter implements JsonWriter {
     }
 
     @Override
-    public boolean writeProperty(String name, Object val, ObjectWriter writer, boolean comma) {
+    public boolean writeObjectProperty(String name, Object val, ObjectWriter writer, boolean comma) {
         if (val == null) return comma;
         if (comma) this.writer.write(IntChar.INT_COMMA);
         write(name);
@@ -419,49 +450,7 @@ public class JsonByteWriter implements JsonWriter {
             writer.write(IntChar.INT_QUOTE);
             return;
         }
-        throw new IllegalStateException("Expecting a primitive or string for Map key.");
-
-    }
-
-    private void writePropertyValue(Object obj) {
-        if (obj instanceof String) {
-            write((String)obj);
-            return;
-        }
-        if (obj instanceof Character) {
-            write((Character)obj);
-            return;
-        }
-        if (obj instanceof Short) {
-            write((Short)obj);
-            return;
-        }
-        if (obj instanceof Integer) {
-            write((Integer)obj);
-            return;
-        }
-        if (obj instanceof Long) {
-            write((Long)obj);
-            return;
-        }
-        if (obj instanceof Byte) {
-            write((Byte)obj);
-            return;
-        }
-        if (obj instanceof Boolean) {
-            write((Boolean)obj);
-            return;
-        }
-        if (obj instanceof Float) {
-            write((Short)obj);
-            return;
-        }
-        if (obj instanceof Double) {
-            write((Short)obj);
-            return;
-        }
-        throw new IllegalStateException("Expecting a primitive or string value.  Make sure to use generics for maps and collections");
-
+        write(obj.toString());
     }
 
     @Override
@@ -480,7 +469,11 @@ public class JsonByteWriter implements JsonWriter {
         if (comma) writer.write(IntChar.INT_COMMA);
         write(name);
         writer.write(IntChar.INT_COLON);
-        write(val);
+        try {
+            write(val);
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Failed to write collection property: " + name, e);
+        }
         return true;
     }
 
@@ -498,7 +491,11 @@ public class JsonByteWriter implements JsonWriter {
             else writer.write(IntChar.INT_COMMA);
             writePropertyName(entry.getKey());
             writer.write(IntChar.INT_COLON);
-            write(entry.getValue(), objectWriter);
+            try {
+                write(entry.getValue(), objectWriter);
+            } catch (RuntimeException e) {
+                throw new RuntimeException("Failed to write map property: " + name, e);
+            }
         }
         writer.write(IntChar.INT_RCURLY);
         return true;
